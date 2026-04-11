@@ -1,0 +1,27 @@
+[project]
+name = "ecuaciones-solver"
+version = "0.1.0"
+description = "Solver de ecuaciones numéricas y algebraicas"
+requires-python = ">=3.13"
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "sympy>=1.13.0",
+    "numpy>=2.2.0",
+    "aiofiles>=25.1.0",
+    "python-multipart>=0.0.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "httpx>=0.27.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["backend*"]

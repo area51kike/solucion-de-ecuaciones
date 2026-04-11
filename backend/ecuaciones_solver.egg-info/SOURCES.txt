@@ -1,0 +1,6 @@
+pyproject.toml
+backend/ecuaciones_solver.egg-info/PKG-INFO
+backend/ecuaciones_solver.egg-info/SOURCES.txt
+backend/ecuaciones_solver.egg-info/dependency_links.txt
+backend/ecuaciones_solver.egg-info/requires.txt
+backend/ecuaciones_solver.egg-info/top_level.txt

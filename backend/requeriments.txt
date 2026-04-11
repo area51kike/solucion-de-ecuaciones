@@ -1,0 +1,4 @@
+conda create -n ecuaciones-solver python=3.13
+conda activate ecuaciones-solver
+pip install fastapi uvicorn[standard] sympy numpy aiofiles python-multipart
+uvicorn main:app --reload

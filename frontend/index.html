@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecuaciones Solver</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700&display=swap;" rel="stylesheet">    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --surface2: #1a1a26;
+            --border: #2a2a3e;
+            --accent: #7c6af7;
+            --accent2: #4ecdc4;
+            --text: #e8e8f0;
+            --muted: #6b6b8a;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'Syne', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                    linear-gradient(var(--border) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .logo span { color: var(--accent); }
+
+        .status-dot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+            animation: pulse 2s infinite;
+        }
+        .dot.online { background: var(--success); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        /* Method groups */
+        .method-group { margin-bottom: 1rem; }
+
+        .group-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 6px;
+            padding-left: 2px;
+        }
+
+        .pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+        .pill {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: var(--mono);
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--muted);
+            transition: all 0.15s;
+        }
+
+        .pill:hover { border-color: var(--accent); color: var(--text); }
+
+        .pill.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* Input section */
+        .input-full { grid-column: 1 / -1; }
+
+        .eq-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .eq-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-family: var(--mono);
+            font-size: 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .eq-input:focus { border-color: var(--accent); }
+        .eq-input.error { border-color: var(--error); }
+        .eq-input::placeholder { color: var(--muted); }
+
+        .eq-preview {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--accent2);
+            margin-top: 6px;
+            min-height: 20px;
+        }
+
+        /* Params */
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .param-group label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .param-group input {
+            width: 100%;
+            padding: 6px 10px;
+            font-family: var(--mono);
+            font-size: 13px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            outline: none;
+        }
+
+        .param-group input:focus { border-color: var(--accent); }
+
+        /* Warning */
+        .warning {
+            background: rgba(251,191,36,0.08);
+            border: 1px solid rgba(251,191,36,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--warning);
+            margin-top: 8px;
+            display: none;
+        }
+
+        /* Quick examples */
+        .quick-wrap {
+            margin-top: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .quick-tag {
+            padding: 3px 8px;
+            font-family: var(--mono);
+            font-size: 11px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            cursor: pointer;
+            color: var(--muted);
+            background: transparent;
+            transition: all 0.12s;
+        }
+
+        .quick-tag:hover { border-color: var(--accent2); color: var(--accent2); }
+
+        /* Solve button */
+        .solve-btn {
+            width: 100%;
+            padding: 13px;
+            font-family: var(--sans);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.15s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .solve-btn:hover { background: #6857e8; }
+        .solve-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .solve-btn.loading { opacity: 0.7; }
+
+        /* Results */
+        .result-panel {
+            grid-column: 1 / -1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            min-height: 120px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge.ok { background: rgba(74,222,128,0.12); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+        .badge.err { background: rgba(248,113,113,0.12); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }
+        .badge.warn { background: rgba(251,191,36,0.12); color: var(--warning); border: 1px solid rgba(251,191,36,0.3); }
+
+        .roots-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .root-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 18px;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .root-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .root-val {
+            font-family: var(--mono);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent2);
+        }
+
+        .root-complex {
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--accent);
+        }
+
+        /* Iterations table */
+        .iter-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--mono);
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .iter-table th {
+            text-align: left;
+            padding: 6px 10px;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+            font-weight: 500;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .iter-table td {
+            padding: 5px 10px;
+            border-bottom: 1px solid rgba(42,42,62,0.5);
+            color: var(--text);
+        }
+
+        .iter-table tr:last-child td { border-bottom: none; }
+
+        .iter-scroll {
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .error-box {
+            background: rgba(248,113,113,0.08);
+            border: 1px solid rgba(248,113,113,0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--error);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 13px;
+        }
+
+        .warn-msg {
+            background: rgba(251,191,36,0.08);
+            border: 1px solid rgba(251,191,36,0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--warning);
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="logo">ecuaciones<span>.</span>solver</div>
+        <div class="status-dot">
+            <div class="dot" id="status-dot"></div>
+            <span id="status-text">conectando...</span>
+        </div>
+    </header>
+
+    <div class="layout">
+        <!-- Métodos -->
+        <div class="panel">
+            <div class="panel-title">Método</div>
+
+            <div class="method-group">
+                <div class="group-label">Cerrados</div>
+                <div class="pills">
+                    <button class="pill" data-method="biseccion" onclick="selectMethod(this)">Bisección</button>
+                    <button class="pill" data-method="falsa_posicion" onclick="selectMethod(this)">Falsa posición</button>
+                </div>
+            </div>
+
+            <div class="method-group">
+                <div class="group-label">Abiertos</div>
+                <div class="pills">
+                    <button class="pill" data-method="punto_fijo" onclick="selectMethod(this)">Punto fijo</button>
+                    <button class="pill" data-method="newton" onclick="selectMethod(this)">Newton-Raphson</button>
+                    <button class="pill" data-method="newton_mod" onclick="selectMethod(this)">Newton mejorado</button>
+                    <button class="pill" data-method="secante" onclick="selectMethod(this)">Secante</button>
+                </div>
+            </div>
+
+            <div class="method-group">
+                <div class="group-label">Algebraicos</div>
+                <div class="pills">
+                    <button class="pill" data-method="lineal" onclick="selectMethod(this)">Lineal</button>
+                    <button class="pill" data-method="cuadratica" onclick="selectMethod(this)">Cuadrática</button>
+                    <button class="pill" data-method="cuad_mod" onclick="selectMethod(this)">Cuad. mod.</button>
+                    <button class="pill" data-method="tartaglia" onclick="selectMethod(this)">Tartaglia</button>
+                    <button class="pill" data-method="ferrari" onclick="selectMethod(this)">Ferrari</button>
+                    <button class="pill" data-method="horner" onclick="selectMethod(this)">Horner</button>
+                    <button class="pill" data-method="muller" onclick="selectMethod(this)">Müller</button>
+                    <button class="pill" data-method="bairstow" onclick="selectMethod(this)">Bairstow</button>
+                    <button class="pill" data-method="bairstow2" onclick="selectMethod(this)">Bairstow 2</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ecuación -->
+        <div class="panel">
+            <div class="panel-title">Ecuación f(x)</div>
+            <input class="eq-input" id="eq-input" type="text"
+                   placeholder="x**3 - 2*x + 1"
+                   oninput="validateEq(this)"
+                   autocomplete="off" autocorrect="off" spellcheck="false"/>
+            <div class="eq-preview" id="eq-preview"></div>
+            <div class="quick-wrap" id="quick-eqs"></div>
+            <div class="warning" id="method-warning"></div>
+            <div id="params-section"></div>
+            <button class="solve-btn" id="solve-btn" onclick="solve()" disabled>
+                Selecciona un método
+            </button>
+        </div>
+
+        <!-- Resultados -->
+        <div class="result-panel" id="result-section">
+            <div class="empty-state">→ Selecciona un método e ingresa una ecuación</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = 'http://localhost:8000';
+
+    const METHODS = {
+        biseccion:     { params: ['a','b','tol','maxIter'], needsInterval: true },
+        falsa_posicion:{ params: ['a','b','tol','maxIter'], needsInterval: true },
+        punto_fijo:    { params: ['x0','tol','maxIter'] },
+        newton:        { params: ['x0','tol','maxIter'] },
+        newton_mod:    { params: ['x0','tol','maxIter'] },
+        secante:       { params: ['x0','x1','tol','maxIter'] },
+        lineal:        { params: [], algebraic: true },
+        cuadratica:    { params: [], algebraic: true },
+        cuad_mod:      { params: [], algebraic: true },
+        tartaglia:     { params: [], algebraic: true },
+        ferrari:       { params: [], algebraic: true },
+        horner:        { params: [], algebraic: true },
+        muller:        { params: ['x0','x1','x2','tol','maxIter'] },
+        bairstow:      { params: ['r','s','tol'], algebraic: true },
+        bairstow2:     { params: ['r','s','tol'], algebraic: true },
+    };
+
+    const PARAM_LABELS   = { a:'a (lím. izq)', b:'b (lím. der)', x0:'x₀', x1:'x₁', x2:'x₂', tol:'Tolerancia', maxIter:'Máx. iter', r:'r', s:'s' };
+    const PARAM_DEFAULTS = { a:'-2', b:'2', x0:'0', x1:'1', x2:'2', tol:'0.0001', maxIter:'100', r:'0', s:'0' };
+
+    const QUICK = {
+        biseccion:['x**3 - x - 2','x**2 - 4','sin(x) - x/2'],
+        falsa_posicion:['x**3 - x - 2','exp(x) - 3'],
+        newton:['x**3 - x - 2','cos(x) - x','x**2 - 2'],
+        newton_mod:['(x-1)**2','x**3 - x - 2'],
+        secante:['x**3 - x - 2','x**2 - 3'],
+        punto_fijo:['cos(x) - x','x**3 - x - 2'],
+        lineal:['2*x + 5','3*x - 9'],
+        cuadratica:['x**2 - 5*x + 6','x**2 + x + 1'],
+        cuad_mod:['x**2 - 0.0001','x**2 + 0.0001'],
+        tartaglia:['x**3 - 6*x - 9','x**3 - 3*x + 2'],
+        ferrari:['x**4 - 5*x**2 + 4','x**4 - 1'],
+        horner:['x**5 - x - 1','x**5 - 32'],
+        muller:['x**3 - x - 2','x**4 - 1'],
+        bairstow:['x**4 - 1','x**3 - 6*x**2 + 11*x - 6'],
+        bairstow2:['x**4 - 1','x**3 + x**2 - 4*x - 4'],
+    };
+
+    let currentMethod = null;
+
+    // Verificar estado del servidor
+    async function checkServer() {
+        try {
+            const res = await fetch(API + '/');
+            if (res.ok) {
+                document.getElementById('status-dot').classList.add('online');
+                document.getElementById('status-text').textContent = 'servidor activo';
+            }
+        } catch {
+            document.getElementById('status-text').textContent = 'servidor offline';
+        }
+    }
+    checkServer();
+    setInterval(checkServer, 5000);
+
+    function selectMethod(el) {
+        document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        currentMethod = el.dataset.method;
+        renderParams();
+        renderQuick();
+        checkWarnings();
+        updateBtn();
+    }
+
+    function renderParams() {
+        const m = METHODS[currentMethod];
+        const sec = document.getElementById('params-section');
+        if (!m.params.length) { sec.innerHTML = ''; return; }
+        sec.innerHTML = `<div class="params-grid" style="margin-top:10px">${
+            m.params.map(p => `
+      <div class="param-group">
+        <label>${PARAM_LABELS[p]||p}</label>
+        <input id="param-${p}" value="${PARAM_DEFAULTS[p]||''}">
+      </div>`).join('')
+        }</div>`;
+    }
+
+    function renderQuick() {
+        const eqs = QUICK[currentMethod] || [];
+        document.getElementById('quick-eqs').innerHTML =
+            eqs.map(eq => `<button class="quick-tag" onclick="setEq('${eq}')">${eq}</button>`).join('');
+    }
+
+    function setEq(eq) {
+        const inp = document.getElementById('eq-input');
+        inp.value = eq;
+        validateEq(inp);
+    }
+
+    function validateEq(inp) {
+        const val = inp.value.trim();
+        const prev = document.getElementById('eq-preview');
+        if (!val) { inp.classList.remove('error'); prev.textContent = ''; updateBtn(); return; }
+        const hasX = /x/.test(val);
+        if (!hasX) {
+            inp.classList.add('error');
+            prev.textContent = '⚠ La ecuación debe contener la variable x';
+        } else {
+            inp.classList.remove('error');
+            prev.textContent = 'f(x) = ' + val.replace(/\*\*/g,'ˆ').replace(/\*/g,'·');
+        }
+        checkWarnings();
+        updateBtn();
+    }
+
+    function checkWarnings() {
+        const warn = document.getElementById('method-warning');
+        const eq = document.getElementById('eq-input').value.trim();
+        if (!currentMethod || !eq) { warn.style.display = 'none'; return; }
+        let msg = '';
+        if (currentMethod === 'lineal' && /x\*\*[2-9]/.test(eq))
+            msg = 'Este método es solo para ecuaciones lineales (grado 1).';
+        else if (currentMethod === 'cuadratica' && /x\*\*[3-9]/.test(eq))
+            msg = 'La fórmula cuadrática es para grado 2. Considera Tartaglia o Ferrari.';
+        else if (currentMethod === 'tartaglia' && /x\*\*[4-9]/.test(eq))
+            msg = 'Tartaglia resuelve cúbicas. Para grado 4 usa Ferrari.';
+        warn.style.display = msg ? 'block' : 'none';
+        warn.textContent = msg ? '⚠ ' + msg : '';
+    }
+
+    function updateBtn() {
+        const btn = document.getElementById('solve-btn');
+        const eq = document.getElementById('eq-input').value.trim();
+        const hasX = /x/.test(eq);
+        if (!currentMethod) { btn.disabled = true; btn.textContent = 'Selecciona un método'; return; }
+        if (!eq || !hasX)   { btn.disabled = true; btn.textContent = 'Ingresa la ecuación'; return; }
+        btn.disabled = false;
+        btn.textContent = 'Calcular →';
+    }
+
+    async function solve() {
+        const eq = document.getElementById('eq-input').value.trim();
+        const m = METHODS[currentMethod];
+        const params = {};
+        (m.params || []).forEach(p => {
+            params[p] = document.getElementById('param-' + p)?.value || PARAM_DEFAULTS[p];
+        });
+
+        const btn = document.getElementById('solve-btn');
+        btn.disabled = true;
+        btn.textContent = 'Calculando...';
+        btn.classList.add('loading');
+
+        try {
+            const res = await fetch(API + '/solve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ equation: eq, method: currentMethod, params })
+            });
+            const data = await res.json();
+            renderResult(data);
+        } catch (e) {
+            renderResult({ error: true, message: 'No se pudo conectar al servidor. Asegúrate de que uvicorn esté corriendo en localhost:8000' });
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Calcular →';
+            btn.classList.remove('loading');
+        }
+    }
+
+    function renderResult(data) {
+        const sec = document.getElementById('result-section');
+
+        if (data.error) {
+            sec.innerHTML = `
+      <div class="result-header">
+        <span style="font-size:13px;font-weight:500">Resultado</span>
+        <span class="badge err">Error</span>
+      </div>
+      <div class="error-box">${data.message}</div>`;
+            return;
+        }
+
+        const badge = data.warning
+            ? '<span class="badge warn">Advertencia</span>'
+            : '<span class="badge ok">OK</span>';
+
+        const rootsHtml = (data.roots || []).map((r, i) => {
+            if (typeof r === 'object' && r.im !== undefined) {
+                return `<div class="root-card">
+        <div class="root-label">x${i+1}</div>
+        <div class="root-complex">${r.re.toFixed(6)} ${r.im >= 0 ? '+' : ''}${r.im.toFixed(6)}i</div>
+      </div>`;
+            }
+            return `<div class="root-card">
+      <div class="root-label">x${i+1}</div>
+      <div class="root-val">${typeof r === 'number' ? r.toFixed(8) : r}</div>
+    </div>`;
+        }).join('');
+
+        const iters = data.iterations || [];
+        const iterHtml = iters.length ? `
+    <div style="margin-top:1rem">
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">
+        Iteraciones (${iters.length})
+      </div>
+      <div class="iter-scroll">
+        <table class="iter-table">
+          <thead><tr><th>N</th><th>x</th><th>f(x)</th><th>Error</th></tr></thead>
+          <tbody>${iters.slice(0, 20).map(it => `
+            <tr>
+              <td>${it.n}</td>
+              <td>${typeof it.x === 'number' ? it.x.toFixed(8) : it.x}</td>
+              <td>${typeof it.fx === 'number' ? it.fx.toExponential(3) : it.fx}</td>
+              <td>${typeof it.error === 'number' ? it.error.toExponential(3) : it.error}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : '';
+
+        sec.innerHTML = `
+    <div class="result-header">
+      <span style="font-size:13px;font-weight:500">Resultado</span>
+      ${badge}
+    </div>
+    ${data.warning ? `<div class="warn-msg">⚠ ${data.warning}</div>` : ''}
+    <div class="roots-row">${rootsHtml || '<span style="color:var(--muted);font-size:13px">Sin raíces reales encontradas</span>'}</div>
+    ${iterHtml}`;
+    }
+</script>
+</body>
+</html>

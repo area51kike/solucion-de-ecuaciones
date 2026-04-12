@@ -4,413 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecuaciones Solver</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700&display=swap;" rel="stylesheet">    <style>
-        :root {
-            --bg: #0a0a0f;
-            --surface: #12121a;
-            --surface2: #1a1a26;
-            --border: #2a2a3e;
-            --accent: #7c6af7;
-            --accent2: #4ecdc4;
-            --text: #e8e8f0;
-            --muted: #6b6b8a;
-            --success: #4ade80;
-            --warning: #fbbf24;
-            --error: #f87171;
-            --mono: 'JetBrains Mono', monospace;
-            --sans: 'Syne', sans-serif;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: var(--sans);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Grid background */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                    linear-gradient(var(--border) 1px, transparent 1px),
-                    linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 40px 40px;
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Header */
-        header {
-            margin-bottom: 2.5rem;
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-        }
-
-        .logo {
-            font-size: 1.6rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .logo span { color: var(--accent); }
-
-        .status-dot {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--mono);
-            font-size: 12px;
-            color: var(--muted);
-        }
-
-        .dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--error);
-            animation: pulse 2s infinite;
-        }
-        .dot.online { background: var(--success); }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        /* Layout */
-        .layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 640px) {
-            .layout { grid-template-columns: 1fr; }
-        }
-
-        .panel {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-        }
-
-        .panel-title {
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 1rem;
-        }
-
-        /* Method groups */
-        .method-group { margin-bottom: 1rem; }
-
-        .group-label {
-            font-family: var(--mono);
-            font-size: 10px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            margin-bottom: 6px;
-            padding-left: 2px;
-        }
-
-        .pills { display: flex; flex-wrap: wrap; gap: 5px; }
-
-        .pill {
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-family: var(--mono);
-            font-size: 11px;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--muted);
-            transition: all 0.15s;
-        }
-
-        .pill:hover { border-color: var(--accent); color: var(--text); }
-
-        .pill.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-
-        /* Input section */
-        .input-full { grid-column: 1 / -1; }
-
-        .eq-label {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .eq-input {
-            width: 100%;
-            padding: 12px 16px;
-            font-family: var(--mono);
-            font-size: 16px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            outline: none;
-            transition: border-color 0.15s;
-        }
-
-        .eq-input:focus { border-color: var(--accent); }
-        .eq-input.error { border-color: var(--error); }
-        .eq-input::placeholder { color: var(--muted); }
-
-        .eq-preview {
-            font-family: var(--mono);
-            font-size: 13px;
-            color: var(--accent2);
-            margin-top: 6px;
-            min-height: 20px;
-        }
-
-        /* Params */
-        .params-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .param-group label {
-            display: block;
-            font-family: var(--mono);
-            font-size: 10px;
-            color: var(--muted);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .param-group input {
-            width: 100%;
-            padding: 6px 10px;
-            font-family: var(--mono);
-            font-size: 13px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            outline: none;
-        }
-
-        .param-group input:focus { border-color: var(--accent); }
-
-        /* Warning */
-        .warning {
-            background: rgba(251,191,36,0.08);
-            border: 1px solid rgba(251,191,36,0.3);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 12px;
-            color: var(--warning);
-            margin-top: 8px;
-            display: none;
-        }
-
-        /* Quick examples */
-        .quick-wrap {
-            margin-top: 8px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-
-        .quick-tag {
-            padding: 3px 8px;
-            font-family: var(--mono);
-            font-size: 11px;
-            border: 1px solid var(--border);
-            border-radius: 5px;
-            cursor: pointer;
-            color: var(--muted);
-            background: transparent;
-            transition: all 0.12s;
-        }
-
-        .quick-tag:hover { border-color: var(--accent2); color: var(--accent2); }
-
-        /* Solve button */
-        .solve-btn {
-            width: 100%;
-            padding: 13px;
-            font-family: var(--sans);
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            border-radius: 8px;
-            border: 1px solid var(--accent);
-            background: var(--accent);
-            color: #fff;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: all 0.15s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .solve-btn:hover { background: #6857e8; }
-        .solve-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .solve-btn.loading { opacity: 0.7; }
-
-        /* Results */
-        .result-panel {
-            grid-column: 1 / -1;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-            min-height: 120px;
-        }
-
-        .result-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-
-        .badge {
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-family: var(--mono);
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        .badge.ok { background: rgba(74,222,128,0.12); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
-        .badge.err { background: rgba(248,113,113,0.12); color: var(--error); border: 1px solid rgba(248,113,113,0.3); }
-        .badge.warn { background: rgba(251,191,36,0.12); color: var(--warning); border: 1px solid rgba(251,191,36,0.3); }
-
-        .roots-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 1rem;
-        }
-
-        .root-card {
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px 18px;
-            text-align: center;
-            min-width: 140px;
-        }
-
-        .root-label {
-            font-family: var(--mono);
-            font-size: 10px;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 4px;
-        }
-
-        .root-val {
-            font-family: var(--mono);
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--accent2);
-        }
-
-        .root-complex {
-            font-family: var(--mono);
-            font-size: 14px;
-            color: var(--accent);
-        }
-
-        /* Iterations table */
-        .iter-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: var(--mono);
-            font-size: 12px;
-            margin-top: 8px;
-        }
-
-        .iter-table th {
-            text-align: left;
-            padding: 6px 10px;
-            color: var(--muted);
-            border-bottom: 1px solid var(--border);
-            font-weight: 500;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .iter-table td {
-            padding: 5px 10px;
-            border-bottom: 1px solid rgba(42,42,62,0.5);
-            color: var(--text);
-        }
-
-        .iter-table tr:last-child td { border-bottom: none; }
-
-        .iter-scroll {
-            max-height: 180px;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        .error-box {
-            background: rgba(248,113,113,0.08);
-            border: 1px solid rgba(248,113,113,0.3);
-            border-radius: 8px;
-            padding: 12px 16px;
-            font-family: var(--mono);
-            font-size: 13px;
-            color: var(--error);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 2rem;
-            color: var(--muted);
-            font-family: var(--mono);
-            font-size: 13px;
-        }
-
-        .warn-msg {
-            background: rgba(251,191,36,0.08);
-            border: 1px solid rgba(251,191,36,0.3);
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 12px;
-            color: var(--warning);
-            margin-bottom: 12px;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -421,125 +18,599 @@
             <span id="status-text">conectando...</span>
         </div>
     </header>
-
-    <div class="layout">
-        <!-- Métodos -->
-        <div class="panel">
-            <div class="panel-title">Método</div>
-
-            <div class="method-group">
-                <div class="group-label">Cerrados</div>
-                <div class="pills">
-                    <button class="pill" data-method="biseccion" onclick="selectMethod(this)">Bisección</button>
-                    <button class="pill" data-method="falsa_posicion" onclick="selectMethod(this)">Falsa posición</button>
+    <div class="main-grid">
+        <div class="col-left">
+            <div class="panel" style="flex:1">
+                <div class="panel-title">Método</div>
+                <div class="method-group">
+                    <div class="group-label">Cerrados</div>
+                    <div class="pills">
+                        <button class="pill" data-method="biseccion" onclick="selectMethod(this)">Bisección</button>
+                        <button class="pill" data-method="falsa_posicion" onclick="selectMethod(this)">Falsa posición
+                        </button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="method-group">
-                <div class="group-label">Abiertos</div>
-                <div class="pills">
-                    <button class="pill" data-method="punto_fijo" onclick="selectMethod(this)">Punto fijo</button>
-                    <button class="pill" data-method="newton" onclick="selectMethod(this)">Newton-Raphson</button>
-                    <button class="pill" data-method="newton_mod" onclick="selectMethod(this)">Newton mejorado</button>
-                    <button class="pill" data-method="secante" onclick="selectMethod(this)">Secante</button>
+                <div class="method-group">
+                    <div class="group-label">Abiertos</div>
+                    <div class="pills">
+                        <button class="pill" data-method="punto_fijo" onclick="selectMethod(this)">Punto fijo</button>
+                        <button class="pill" data-method="newton" onclick="selectMethod(this)">Newton-Raphson</button>
+                        <button class="pill" data-method="newton_mod" onclick="selectMethod(this)">Newton mejorado
+                        </button>
+                        <button class="pill" data-method="secante" onclick="selectMethod(this)">Secante</button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="method-group">
-                <div class="group-label">Algebraicos</div>
-                <div class="pills">
-                    <button class="pill" data-method="lineal" onclick="selectMethod(this)">Lineal</button>
-                    <button class="pill" data-method="cuadratica" onclick="selectMethod(this)">Cuadrática</button>
-                    <button class="pill" data-method="cuad_mod" onclick="selectMethod(this)">Cuad. mod.</button>
-                    <button class="pill" data-method="tartaglia" onclick="selectMethod(this)">Tartaglia</button>
-                    <button class="pill" data-method="ferrari" onclick="selectMethod(this)">Ferrari</button>
-                    <button class="pill" data-method="horner" onclick="selectMethod(this)">Horner</button>
-                    <button class="pill" data-method="muller" onclick="selectMethod(this)">Müller</button>
-                    <button class="pill" data-method="bairstow" onclick="selectMethod(this)">Bairstow</button>
-                    <button class="pill" data-method="bairstow2" onclick="selectMethod(this)">Bairstow 2</button>
+                <div class="method-group">
+                    <div class="group-label">Algebraicos</div>
+                    <div class="pills">
+                        <button class="pill" data-method="lineal" onclick="selectMethod(this)">Lineal</button>
+                        <button class="pill" data-method="cuadratica" onclick="selectMethod(this)">Cuadrática</button>
+                        <button class="pill" data-method="cuad_mod" onclick="selectMethod(this)">Cuad. mod.</button>
+                        <button class="pill" data-method="tartaglia" onclick="selectMethod(this)">Tartaglia</button>
+                        <button class="pill" data-method="ferrari" onclick="selectMethod(this)">Ferrari</button>
+                        <button class="pill" data-method="horner" onclick="selectMethod(this)">Horner</button>
+                        <button class="pill" data-method="muller" onclick="selectMethod(this)">Müller</button>
+                        <button class="pill" data-method="bairstow" onclick="selectMethod(this)">Bairstow</button>
+                        <button class="pill" data-method="bairstow2" onclick="selectMethod(this)">Bairstow 2</button>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Ecuación -->
-        <div class="panel">
-            <div class="panel-title">Ecuación f(x)</div>
-            <input class="eq-input" id="eq-input" type="text"
-                   placeholder="x**3 - 2*x + 1"
-                   oninput="validateEq(this)"
-                   autocomplete="off" autocorrect="off" spellcheck="false"/>
-            <div class="eq-preview" id="eq-preview"></div>
-            <div class="quick-wrap" id="quick-eqs"></div>
-            <div class="warning" id="method-warning"></div>
-            <div id="params-section"></div>
-            <button class="solve-btn" id="solve-btn" onclick="solve()" disabled>
-                Selecciona un método
-            </button>
-        </div>
-
-        <!-- Resultados -->
-        <div class="result-panel" id="result-section">
-            <div class="empty-state">→ Selecciona un método e ingresa una ecuación</div>
+        <div class="col-right">
+            <div class="panel">
+                <div class="panel-title">Ecuación f(x)</div>
+                <div class="math-display" id="math-display" onclick="onDisplayClick(event)">
+                    <span class="math-cursor" id="math-cursor"></span>
+                </div>
+                <div class="eq-preview" id="eq-preview"></div>
+                <div class="mathkb">
+                    <div>
+                        <div class="kb-section-label">Variable &amp; Funciones</div>
+                        <div class="kb-row">
+                            <button class="kb-btn kb-var" onclick="edInsertRaw('x')">x</button>
+                            <div class="kb-sep"></div>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('sin(')">sin</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('cos(')">cos</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('tan(')">tan</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('exp(')">exp</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('log(')">log</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('ln(')">ln</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('abs(')">|x|</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="kb-section-label">Estructura &amp; Constantes</div>
+                        <div class="kb-row">
+                            <button class="kb-btn kb-struct" onclick="edInsertFrac()" title="Fracción">
+                                <span class="kb-frac-icon"><span class="kb-frac-icon-top">a</span><span
+                                        class="kb-frac-icon-bot">b</span></span>
+                            </button>
+                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','')" title="xⁿ"><span
+                                    class="kb-pow-icon">x<sup>n</sup></span></button>
+                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','2')" title="x²"><span
+                                    class="kb-pow-icon">x<sup>2</sup></span></button>
+                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','3')" title="x³"><span
+                                    class="kb-pow-icon">x<sup>3</sup></span></button>
+                            <button class="kb-btn kb-struct" onclick="edInsertSqrt()">√</button>
+                            <div class="kb-sep"></div>
+                            <button class="kb-btn kb-op" onclick="edInsertRaw('(')">(</button>
+                            <button class="kb-btn kb-op" onclick="edInsertRaw(')')">)</button>
+                            <div class="kb-sep"></div>
+                            <button class="kb-btn kb-const" onclick="edInsertRaw('pi')">π</button>
+                            <button class="kb-btn kb-const" onclick="edInsertRaw('e')">e</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="kb-section-label">Tablero numérico</div>
+                        <div class="kb-numpad-section">
+                            <div>
+                                <div class="kb-numpad-grid">
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('7')">7</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('8')">8</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('9')">9</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('4')">4</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('5')">5</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('6')">6</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('1')">1</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('2')">2</button>
+                                    <button class="kb-btn kb-num" onclick="edInsertRaw('3')">3</button>
+                                </div>
+                                <div style="display:flex;gap:5px;margin-top:5px;">
+                                    <button class="kb-btn kb-num" style="flex:1;height:40px;font-size:15px;"
+                                            onclick="edInsertRaw('0')">0
+                                    </button>
+                                    <button class="kb-btn kb-num" style="width:44px;min-width:44px;height:40px;"
+                                            onclick="edInsertRaw('.')">.
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="kb-sep" style="height:auto;margin:0 6px;"></div>
+                            <div class="kb-numpad-ops">
+                                <button class="kb-btn kb-op" onclick="edInsertRaw('+')">+</button>
+                                <button class="kb-btn kb-op" onclick="edInsertRaw('-')">−</button>
+                                <button class="kb-btn kb-op" onclick="edInsertRaw('*')">×</button>
+                                <button class="kb-btn kb-op" onclick="edInsertRaw('/')">÷</button>
+                            </div>
+                            <div class="kb-sep" style="height:auto;margin:0 6px;"></div>
+                            <div class="kb-numpad-ops">
+                                <button class="kb-btn kb-del" onclick="edDelete()" title="Borrar">⌫</button>
+                                <button class="kb-btn kb-clr" onclick="edClear()">CLR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="quick-wrap" id="quick-eqs"></div>
+                <div class="warning" id="method-warning"></div>
+                <div id="params-section"></div>
+                <button class="solve-btn" id="solve-btn" onclick="solve()" disabled>Selecciona un método</button>
+            </div>
+            <div class="bottom-grid">
+                <div class="result-panel" id="result-section">
+                    <div class="empty-state">→ Selecciona un método e ingresa una ecuación</div>
+                </div>
+                <div class="chart-panel">
+                    <div class="result-header">
+                        <span class="panel-title" style="margin:0">Gráfica f(x)</span>
+                    </div>
+                    <div class="chart-controls">
+                        <label>x min</label><input id="xmin" value="-5" type="number" step="1">
+                        <label>x max</label><input id="xmax" value="5" type="number" step="1">
+                        <button class="chart-btn" onclick="drawChart()">Graficar</button>
+                    </div>
+                    <canvas id="chart-canvas" height="230"></canvas>
+                    <div id="chart-empty" class="empty-state">→ Ingresa una ecuación para graficar</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
 <script>
+    let nodes = [], cursor = 0, edFocused = false;
+    const disp = document.getElementById('math-display'), curEl = document.getElementById('math-cursor'),
+        prevEl = document.getElementById('eq-preview');
+
+    function toPython() {
+        return nodes.map(n => {
+            if (n.type === 'text') return n.val;
+            if (n.type === 'frac') return `(${n.num || '0'})/(${n.den || '1'})`;
+            if (n.type === 'pow') return `${n.base}**(${n.exp || '1'})`;
+            if (n.type === 'sqrt') return `sqrt(${n.inner || '0'})`;
+            return '';
+        }).join('');
+    }
+
+    function render() {
+        disp.innerHTML = '';
+        for (let i = 0; i <= nodes.length; i++) {
+            if (i === cursor) disp.appendChild(curEl);
+            if (i < nodes.length) disp.appendChild(buildEl(nodes[i], i));
+        }
+        const py = toPython();
+        syncPreview(py);
+        syncWarnings(py);
+        syncBtn(py);
+        clearTimeout(window._ct);
+        window._ct = setTimeout(drawChart, 600);
+    }
+
+    function buildEl(n, idx) {
+        if (n.type === 'text') {
+            const sp = document.createElement('span');
+            sp.className = `mt ${tokenClass(n.val)}`;
+            sp.textContent = n.val;
+            sp.onclick = e => {
+                cursor = idx + 1;
+                render();
+                e.stopPropagation();
+            };
+            return sp;
+        }
+        if (n.type === 'frac') {
+            const w = ce('span', 'mfrac');
+            const numEl = ce('span', 'mfrac-num');
+            numEl.contentEditable = true;
+            numEl.spellcheck = false;
+            numEl.setAttribute('data-ph', '■');
+            numEl.textContent = n.num || '';
+            numEl.oninput = () => {
+                n.num = numEl.textContent;
+                syncAll();
+            };
+            numEl.onkeydown = e => {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    denEl.focus();
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    cursor = idx + 1;
+                    render();
+                }
+                if (e.key === 'Backspace' && !numEl.textContent) {
+                    e.preventDefault();
+                    edDeleteNode(idx);
+                }
+            };
+            addCEFocus(numEl);
+            const bar = ce('span', 'mfrac-bar');
+            const denEl = ce('span', 'mfrac-den');
+            denEl.contentEditable = true;
+            denEl.spellcheck = false;
+            denEl.setAttribute('data-ph', '■');
+            denEl.textContent = n.den || '';
+            denEl.oninput = () => {
+                n.den = denEl.textContent;
+                syncAll();
+            };
+            denEl.onkeydown = e => {
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault();
+                    cursor = idx + 1;
+                    render();
+                }
+            };
+            addCEFocus(denEl);
+            w.appendChild(numEl);
+            w.appendChild(bar);
+            w.appendChild(denEl);
+            w.onclick = e => {
+                cursor = idx;
+                e.stopPropagation();
+            };
+            return w;
+        }
+        if (n.type === 'pow') {
+            const w = ce('span', 'mpow');
+            const baseEl = ce('span', 'mpow-base');
+            baseEl.textContent = n.base;
+            const expEl = ce('span', 'mpow-exp');
+            expEl.contentEditable = true;
+            expEl.spellcheck = false;
+            expEl.textContent = n.exp || '';
+            expEl.oninput = () => {
+                n.exp = expEl.textContent;
+                syncAll();
+            };
+            expEl.onkeydown = e => {
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault();
+                    cursor = idx + 1;
+                    render();
+                }
+                if (e.key === 'Backspace' && !expEl.textContent) {
+                    e.preventDefault();
+                    edDeleteNode(idx);
+                }
+            };
+            addCEFocus(expEl);
+            w.appendChild(baseEl);
+            w.appendChild(expEl);
+            w.onclick = e => {
+                cursor = idx;
+                e.stopPropagation();
+            };
+            return w;
+        }
+        if (n.type === 'sqrt') {
+            const w = ce('span', 'msqrt');
+            const sym = ce('span', 'msqrt-sym');
+            sym.textContent = '√';
+            const body = ce('span', 'msqrt-body');
+            body.contentEditable = true;
+            body.spellcheck = false;
+            body.textContent = n.inner || '';
+            body.oninput = () => {
+                n.inner = body.textContent;
+                syncAll();
+            };
+            body.onkeydown = e => {
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault();
+                    cursor = idx + 1;
+                    render();
+                }
+                if (e.key === 'Backspace' && !body.textContent) {
+                    e.preventDefault();
+                    edDeleteNode(idx);
+                }
+            };
+            addCEFocus(body);
+            w.appendChild(sym);
+            w.appendChild(body);
+            w.onclick = e => {
+                cursor = idx;
+                e.stopPropagation();
+            };
+            return w;
+        }
+        return document.createElement('span');
+    }
+
+    function ce(tag, cls) {
+        const el = document.createElement(tag);
+        if (cls) el.className = cls;
+        return el;
+    }
+
+    function addCEFocus(el) {
+        el.onfocus = () => {
+            edFocused = true;
+            disp.classList.add('focused');
+        };
+        el.onclick = e => e.stopPropagation();
+    }
+
+    function tokenClass(v) {
+        if (/^x$/.test(v)) return 'mt-x';
+        if (/^(sin|cos|tan|exp|log|sqrt|ln|abs)/.test(v)) return 'mt-fn';
+        if (/^[+\-*/]$/.test(v)) return 'mt-op';
+        if (/^[\d.]+$/.test(v)) return 'mt-num';
+        return 'mt-misc';
+    }
+
+    function syncAll() {
+        const py = toPython();
+        syncPreview(py);
+        syncWarnings(py);
+        syncBtn(py);
+        clearTimeout(window._ct);
+        window._ct = setTimeout(drawChart, 600);
+    }
+
+    function syncPreview(py) {
+        if (!py) {
+            prevEl.textContent = '';
+            return;
+        }
+        if (!/x/.test(py)) {
+            prevEl.textContent = '⚠ La ecuación debe contener x';
+            return;
+        }
+        prevEl.textContent = 'f(x) = ' + py.replace(/\*\*/g, 'ˆ').replace(/\*/g, '·');
+    }
+
+    function onDisplayClick(e) {
+        edFocused = true;
+        disp.classList.add('focused');
+        if (e.target === disp) {
+            cursor = nodes.length;
+            render();
+        }
+    }
+
+    document.addEventListener('click', e => {
+        if (!disp.contains(e.target) && !e.target.closest('.mathkb')) {
+            edFocused = false;
+            disp.classList.remove('focused');
+        }
+    });
+    document.addEventListener('keydown', e => {
+        if (document.activeElement && document.activeElement.contentEditable === 'true') return;
+        if (!edFocused) return;
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            cursor = Math.max(0, cursor - 1);
+            render();
+            return;
+        }
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            cursor = Math.min(nodes.length, cursor + 1);
+            render();
+            return;
+        }
+        if (e.key === 'Backspace') {
+            e.preventDefault();
+            edDelete();
+            return;
+        }
+        if (e.key === 'Escape') {
+            edFocused = false;
+            disp.classList.remove('focused');
+            return;
+        }
+        const ch = e.key;
+        if (ch.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            ch === '^' ? edInsertPow('x', '') : edInsertRaw(ch);
+        }
+    });
+
+    function edFocus() {
+        edFocused = true;
+        disp.classList.add('focused');
+    }
+
+    function edInsertRaw(val) {
+        edFocus();
+        const prev = nodes[cursor - 1];
+        if (prev && prev.type === 'text') {
+            prev.val += val;
+        } else {
+            nodes.splice(cursor, 0, {type: 'text', val});
+            cursor++;
+        }
+        render();
+    }
+
+    function edInsertFrac() {
+        edFocus();
+        nodes.splice(cursor, 0, {type: 'frac', num: '', den: ''});
+        cursor++;
+        render();
+        setTimeout(() => {
+            const t = [...disp.querySelectorAll('.mfrac')][cursor - 1];
+            if (t) t.querySelector('.mfrac-num').focus();
+        }, 40);
+    }
+
+    function edInsertPow(base, exp) {
+        edFocus();
+        const prev = nodes[cursor - 1];
+        let actualBase = base;
+        if (prev && prev.type === 'text') {
+            const last = prev.val.slice(-1);
+            if (last && last !== '(' && last !== ')') {
+                actualBase = last;
+                prev.val = prev.val.slice(0, -1);
+                if (!prev.val) {
+                    nodes.splice(cursor - 1, 1);
+                    cursor--;
+                }
+            }
+        }
+        nodes.splice(cursor, 0, {type: 'pow', base: actualBase, exp});
+        cursor++;
+        render();
+        setTimeout(() => {
+            const ex = disp.querySelectorAll('.mpow-exp');
+            if (ex[cursor - 1]) ex[cursor - 1].focus();
+        }, 40);
+    }
+
+    function edInsertSqrt() {
+        edFocus();
+        nodes.splice(cursor, 0, {type: 'sqrt', inner: ''});
+        cursor++;
+        render();
+        setTimeout(() => {
+            const b = disp.querySelectorAll('.msqrt-body');
+            if (b[cursor - 1]) b[cursor - 1].focus();
+        }, 40);
+    }
+
+    function edDelete() {
+        if (cursor === 0) return;
+        edDeleteNode(cursor - 1);
+    }
+
+    function edDeleteNode(idx) {
+        const n = nodes[idx];
+        if (n && n.type === 'text' && n.val.length > 1) {
+            n.val = n.val.slice(0, -1);
+        } else {
+            nodes.splice(idx, 1);
+            if (cursor > idx) cursor--;
+        }
+        render();
+    }
+
+    function edClear() {
+        nodes = [];
+        cursor = 0;
+        lastRoots = [];
+        render();
+        drawChart();
+    }
+
+    function loadEq(py) {
+        nodes = tokenize(py);
+        cursor = nodes.length;
+        lastRoots = [];
+        render();
+    }
+
+    function tokenize(str) {
+        const out = [];
+        const re = /(\([^)]*\)\/\([^)]*\))|([a-zA-Z_]\w*\*\*\([^)]+\))|([a-zA-Z_]?\w*\*\*\d+(?:\.\d+)?(?:\*\*\d+)?)|(sqrt\([^)]*\))|([^])/g;
+        let m;
+        while ((m = re.exec(str)) !== null) {
+            const raw = m[0];
+            const fm = raw.match(/^\(([^)]*)\)\/\(([^)]*)\)$/);
+            if (fm) {
+                out.push({type: 'frac', num: fm[1], den: fm[2]});
+                continue;
+            }
+            const pm1 = raw.match(/^([a-zA-Z_]\w*)\*\*\(([^)]+)\)$/);
+            if (pm1) {
+                out.push({type: 'pow', base: pm1[1], exp: pm1[2]});
+                continue;
+            }
+            const pm2 = raw.match(/^([a-zA-Z_]?\w*)\*\*(\d+(?:\.\d+)?)$/);
+            if (pm2) {
+                out.push({type: 'pow', base: pm2[1], exp: pm2[2]});
+                continue;
+            }
+            const sm = raw.match(/^sqrt\(([^)]*)\)$/);
+            if (sm) {
+                out.push({type: 'sqrt', inner: sm[1]});
+                continue;
+            }
+            const last = out[out.length - 1];
+            if (last && last.type === 'text') last.val += raw; else out.push({type: 'text', val: raw});
+        }
+        return out;
+    }
+
     const API = 'http://localhost:8000';
-
+    let chartInstance = null, lastRoots = [];
     const METHODS = {
-        biseccion:     { params: ['a','b','tol','maxIter'], needsInterval: true },
-        falsa_posicion:{ params: ['a','b','tol','maxIter'], needsInterval: true },
-        punto_fijo:    { params: ['x0','tol','maxIter'] },
-        newton:        { params: ['x0','tol','maxIter'] },
-        newton_mod:    { params: ['x0','tol','maxIter'] },
-        secante:       { params: ['x0','x1','tol','maxIter'] },
-        lineal:        { params: [], algebraic: true },
-        cuadratica:    { params: [], algebraic: true },
-        cuad_mod:      { params: [], algebraic: true },
-        tartaglia:     { params: [], algebraic: true },
-        ferrari:       { params: [], algebraic: true },
-        horner:        { params: [], algebraic: true },
-        muller:        { params: ['x0','x1','x2','tol','maxIter'] },
-        bairstow:      { params: ['r','s','tol'], algebraic: true },
-        bairstow2:     { params: ['r','s','tol'], algebraic: true },
+        biseccion: {params: ['a', 'b', 'tol', 'maxIter']},
+        falsa_posicion: {params: ['a', 'b', 'tol', 'maxIter']},
+        punto_fijo: {params: ['x0', 'tol', 'maxIter']},
+        newton: {params: ['x0', 'tol', 'maxIter']},
+        newton_mod: {params: ['x0', 'tol', 'maxIter']},
+        secante: {params: ['x0', 'x1', 'tol', 'maxIter']},
+        lineal: {params: []},
+        cuadratica: {params: []},
+        cuad_mod: {params: []},
+        tartaglia: {params: []},
+        ferrari: {params: []},
+        horner: {params: []},
+        muller: {params: ['x0', 'x1', 'x2', 'tol', 'maxIter']},
+        bairstow: {params: ['r', 's', 'tol']},
+        bairstow2: {params: ['r', 's', 'tol']}
     };
-
-    const PARAM_LABELS   = { a:'a (lím. izq)', b:'b (lím. der)', x0:'x₀', x1:'x₁', x2:'x₂', tol:'Tolerancia', maxIter:'Máx. iter', r:'r', s:'s' };
-    const PARAM_DEFAULTS = { a:'-2', b:'2', x0:'0', x1:'1', x2:'2', tol:'0.0001', maxIter:'100', r:'0', s:'0' };
-
+    const PARAM_LABELS = {
+        a: 'a (lím. izq)',
+        b: 'b (lím. der)',
+        x0: 'x₀',
+        x1: 'x₁',
+        x2: 'x₂',
+        tol: 'Tolerancia',
+        maxIter: 'Máx. iter',
+        r: 'r',
+        s: 's'
+    };
+    const PARAM_DEFAULTS = {a: '-2', b: '2', x0: '0', x1: '1', x2: '2', tol: '0.0001', maxIter: '100', r: '1', s: '-1'};
     const QUICK = {
-        biseccion:['x**3 - x - 2','x**2 - 4','sin(x) - x/2'],
-        falsa_posicion:['x**3 - x - 2','exp(x) - 3'],
-        newton:['x**3 - x - 2','cos(x) - x','x**2 - 2'],
-        newton_mod:['(x-1)**2','x**3 - x - 2'],
-        secante:['x**3 - x - 2','x**2 - 3'],
-        punto_fijo:['cos(x) - x','x**3 - x - 2'],
-        lineal:['2*x + 5','3*x - 9'],
-        cuadratica:['x**2 - 5*x + 6','x**2 + x + 1'],
-        cuad_mod:['x**2 - 0.0001','x**2 + 0.0001'],
-        tartaglia:['x**3 - 6*x - 9','x**3 - 3*x + 2'],
-        ferrari:['x**4 - 5*x**2 + 4','x**4 - 1'],
-        horner:['x**5 - x - 1','x**5 - 32'],
-        muller:['x**3 - x - 2','x**4 - 1'],
-        bairstow:['x**4 - 1','x**3 - 6*x**2 + 11*x - 6'],
-        bairstow2:['x**4 - 1','x**3 + x**2 - 4*x - 4'],
+        biseccion: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {
+            label: 'x² − 4',
+            val: 'x**2 - 4'
+        }, {label: 'sin(x) − x/2', val: 'sin(x) - x/2'}],
+        falsa_posicion: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'eˣ − 3', val: 'exp(x) - 3'}],
+        newton: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'cos(x) − x', val: 'cos(x) - x'}, {
+            label: 'x² − 2',
+            val: 'x**2 - 2'
+        }],
+        newton_mod: [{label: '(x−1)²', val: '(x-1)**2'}, {label: 'x³ − x − 2', val: 'x**3 - x - 2'}],
+        secante: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'x² − 3', val: 'x**2 - 3'}],
+        punto_fijo: [{label: 'cos(x) − x', val: 'cos(x) - x'}, {label: 'x³ − x − 2', val: 'x**3 - x - 2'}],
+        lineal: [{label: '2x + 5', val: '2*x + 5'}, {label: '3x − 9', val: '3*x - 9'}],
+        cuadratica: [{label: 'x² − 5x + 6', val: 'x**2 - 5*x + 6'}, {label: 'x² + x + 1', val: 'x**2 + x + 1'}],
+        cuad_mod: [{label: 'x² − 0.0001', val: 'x**2 - 0.0001'}, {label: 'x² + 0.0001', val: 'x**2 + 0.0001'}],
+        tartaglia: [{label: 'x³ − 6x − 9', val: 'x**3 - 6*x - 9'}, {label: 'x³ − 3x + 2', val: 'x**3 - 3*x + 2'}],
+        ferrari: [{label: 'x⁴ − 5x² + 4', val: 'x**4 - 5*x**2 + 4'}, {label: 'x⁴ − 1', val: 'x**4 - 1'}],
+        horner: [{label: 'x⁵ − x − 1', val: 'x**5 - x - 1'}, {label: 'x⁵ − 32', val: 'x**5 - 32'}],
+        muller: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'x⁴ − 1', val: 'x**4 - 1'}],
+        bairstow: [{label: 'x⁴ − 1', val: 'x**4 - 1'}, {label: 'x³−6x²+11x−6', val: 'x**3 - 6*x**2 + 11*x - 6'}],
+        bairstow2: [{label: 'x⁴ − 1', val: 'x**4 - 1'}, {label: 'x³+x²−4x−4', val: 'x**3 + x**2 - 4*x - 4'}]
     };
-
     let currentMethod = null;
 
-    // Verificar estado del servidor
     async function checkServer() {
         try {
-            const res = await fetch(API + '/');
-            if (res.ok) {
+            const r = await fetch(API + '/');
+            if (r.ok) {
                 document.getElementById('status-dot').classList.add('online');
                 document.getElementById('status-text').textContent = 'servidor activo';
-            }
+            } else throw 0;
         } catch {
+            document.getElementById('status-dot').classList.remove('online');
             document.getElementById('status-text').textContent = 'servidor offline';
         }
     }
+
     checkServer();
     setInterval(checkServer, 5000);
 
@@ -549,166 +620,203 @@
         currentMethod = el.dataset.method;
         renderParams();
         renderQuick();
-        checkWarnings();
-        updateBtn();
+        syncWarnings(toPython());
+        syncBtn(toPython());
     }
 
     function renderParams() {
         const m = METHODS[currentMethod];
         const sec = document.getElementById('params-section');
-        if (!m.params.length) { sec.innerHTML = ''; return; }
-        sec.innerHTML = `<div class="params-grid" style="margin-top:10px">${
-            m.params.map(p => `
-      <div class="param-group">
-        <label>${PARAM_LABELS[p]||p}</label>
-        <input id="param-${p}" value="${PARAM_DEFAULTS[p]||''}">
-      </div>`).join('')
-        }</div>`;
+        if (!m.params.length) {
+            sec.innerHTML = '';
+            return;
+        }
+        sec.innerHTML = `<div class="params-grid">${m.params.map(p => `<div class="param-group"><label>${PARAM_LABELS[p] || p}</label><input id="param-${p}" value="${PARAM_DEFAULTS[p] || ''}"></div>`).join('')}</div>`;
     }
 
     function renderQuick() {
         const eqs = QUICK[currentMethod] || [];
-        document.getElementById('quick-eqs').innerHTML =
-            eqs.map(eq => `<button class="quick-tag" onclick="setEq('${eq}')">${eq}</button>`).join('');
+        document.getElementById('quick-eqs').innerHTML = eqs.map(eq => `<button class="quick-tag" onclick="loadEq('${eq.val}')">${eq.label}</button>`).join('');
     }
 
-    function setEq(eq) {
-        const inp = document.getElementById('eq-input');
-        inp.value = eq;
-        validateEq(inp);
-    }
-
-    function validateEq(inp) {
-        const val = inp.value.trim();
-        const prev = document.getElementById('eq-preview');
-        if (!val) { inp.classList.remove('error'); prev.textContent = ''; updateBtn(); return; }
-        const hasX = /x/.test(val);
-        if (!hasX) {
-            inp.classList.add('error');
-            prev.textContent = '⚠ La ecuación debe contener la variable x';
-        } else {
-            inp.classList.remove('error');
-            prev.textContent = 'f(x) = ' + val.replace(/\*\*/g,'ˆ').replace(/\*/g,'·');
-        }
-        checkWarnings();
-        updateBtn();
-    }
-
-    function checkWarnings() {
+    function syncWarnings(py) {
         const warn = document.getElementById('method-warning');
-        const eq = document.getElementById('eq-input').value.trim();
-        if (!currentMethod || !eq) { warn.style.display = 'none'; return; }
+        if (!currentMethod || !py) {
+            warn.style.display = 'none';
+            return;
+        }
         let msg = '';
-        if (currentMethod === 'lineal' && /x\*\*[2-9]/.test(eq))
-            msg = 'Este método es solo para ecuaciones lineales (grado 1).';
-        else if (currentMethod === 'cuadratica' && /x\*\*[3-9]/.test(eq))
-            msg = 'La fórmula cuadrática es para grado 2. Considera Tartaglia o Ferrari.';
-        else if (currentMethod === 'tartaglia' && /x\*\*[4-9]/.test(eq))
-            msg = 'Tartaglia resuelve cúbicas. Para grado 4 usa Ferrari.';
+        if (currentMethod === 'lineal' && /x\*\*[2-9]/.test(py)) msg = 'Este método es solo para ecuaciones lineales (grado 1).';
+        if (currentMethod === 'cuadratica' && /x\*\*[3-9]/.test(py)) msg = 'La fórmula cuadrática es para grado 2. Considera Tartaglia o Ferrari.';
+        if (currentMethod === 'tartaglia' && /x\*\*[4-9]/.test(py)) msg = 'Tartaglia resuelve cúbicas. Para grado 4 usa Ferrari.';
         warn.style.display = msg ? 'block' : 'none';
         warn.textContent = msg ? '⚠ ' + msg : '';
     }
 
-    function updateBtn() {
+    function syncBtn(py) {
         const btn = document.getElementById('solve-btn');
-        const eq = document.getElementById('eq-input').value.trim();
-        const hasX = /x/.test(eq);
-        if (!currentMethod) { btn.disabled = true; btn.textContent = 'Selecciona un método'; return; }
-        if (!eq || !hasX)   { btn.disabled = true; btn.textContent = 'Ingresa la ecuación'; return; }
+        if (!currentMethod) {
+            btn.disabled = true;
+            btn.textContent = 'Selecciona un método';
+            return;
+        }
+        if (!py || !/x/.test(py)) {
+            btn.disabled = true;
+            btn.textContent = 'Ingresa la ecuación';
+            return;
+        }
         btn.disabled = false;
         btn.textContent = 'Calcular →';
     }
 
-    async function solve() {
-        const eq = document.getElementById('eq-input').value.trim();
-        const m = METHODS[currentMethod];
-        const params = {};
-        (m.params || []).forEach(p => {
-            params[p] = document.getElementById('param-' + p)?.value || PARAM_DEFAULTS[p];
-        });
+    async function solve(){
+        const eq=toPython().trim();
+        const btn=document.getElementById('solve-btn');
 
-        const btn = document.getElementById('solve-btn');
-        btn.disabled = true;
-        btn.textContent = 'Calculando...';
-        btn.classList.add('loading');
+        // ── Punto fijo resuelto en el navegador (sin backend) ──
+        if(currentMethod==='punto_fijo'){
+            const x0  = parseFloat(document.getElementById('param-x0')?.value  ?? PARAM_DEFAULTS.x0);
+            const tol = parseFloat(document.getElementById('param-tol')?.value  ?? PARAM_DEFAULTS.tol);
+            const max = parseInt  (document.getElementById('param-maxIter')?.value ?? PARAM_DEFAULTS.maxIter);
+            const iters=[];
+            let x=x0, err=Infinity;
+            for(let n=1; n<=max && err>=tol; n++){
+                const fx=evalEq(eq,x);
+                if(fx===null){renderResult({error:true,message:'f(x) no evaluable en x = '+x});return;}
+                const xNew=x - fx;          // g(x) = x − f(x)
+                err=Math.abs(xNew - x);
+                iters.push({n, x:xNew, fx:evalEq(eq,xNew)??0, error:err});
+                x=xNew;
+            }
+            renderResult({roots:[x], iterations:iters, warning:err>=tol?'No convergió en '+max+' iteraciones':null});
+            lastRoots=[parseFloat(x.toFixed(8))];
+            drawChart();
+            return;
+        }
+        // ──────────────────────────────────────────────────────
 
-        try {
-            const res = await fetch(API + '/solve', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ equation: eq, method: currentMethod, params })
-            });
-            const data = await res.json();
+        const m=METHODS[currentMethod];
+        const params={};
+        (m.params||[]).forEach(p=>{params[p]=document.getElementById('param-'+p)?.value||PARAM_DEFAULTS[p];});
+        btn.disabled=true;btn.textContent='Calculando...';
+        try{
+            const res=await fetch(API+'/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({equation:eq,method:currentMethod,params})});
+            const data=await res.json();
             renderResult(data);
-        } catch (e) {
-            renderResult({ error: true, message: 'No se pudo conectar al servidor. Asegúrate de que uvicorn esté corriendo en localhost:8000' });
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Calcular →';
-            btn.classList.remove('loading');
+            lastRoots=(data.roots||[]).filter(r=>typeof r==='number'&&isFinite(r)).map(r=>parseFloat(r.toFixed(8)));
+            drawChart();
+        }catch{
+            renderResult({error:true,message:'No se pudo conectar al servidor. Asegúrate de que uvicorn esté corriendo en localhost:8000.'});
+        }finally{
+            btn.disabled=false;btn.textContent='Calcular →';
         }
     }
 
     function renderResult(data) {
         const sec = document.getElementById('result-section');
-
         if (data.error) {
-            sec.innerHTML = `
-      <div class="result-header">
-        <span style="font-size:13px;font-weight:500">Resultado</span>
-        <span class="badge err">Error</span>
-      </div>
-      <div class="error-box">${data.message}</div>`;
+            sec.innerHTML = `<div class="result-header"><span style="font-size:13px;font-weight:600">Resultado</span><span class="badge err">Error</span></div><div class="error-box">${data.message}</div>`;
             return;
         }
-
-        const badge = data.warning
-            ? '<span class="badge warn">Advertencia</span>'
-            : '<span class="badge ok">OK</span>';
-
+        const badge = data.warning ? '<span class="badge warn">Advertencia</span>' : '<span class="badge ok">OK</span>';
         const rootsHtml = (data.roots || []).map((r, i) => {
-            if (typeof r === 'object' && r.im !== undefined) {
-                return `<div class="root-card">
-        <div class="root-label">x${i+1}</div>
-        <div class="root-complex">${r.re.toFixed(6)} ${r.im >= 0 ? '+' : ''}${r.im.toFixed(6)}i</div>
-      </div>`;
-            }
-            return `<div class="root-card">
-      <div class="root-label">x${i+1}</div>
-      <div class="root-val">${typeof r === 'number' ? r.toFixed(8) : r}</div>
-    </div>`;
+            if (typeof r === 'object' && r.im !== undefined) return `<div class="root-card"><div class="root-label">x${i + 1}</div><div class="root-complex">${r.re.toFixed(6)} ${r.im >= 0 ? '+' : ''}${r.im.toFixed(6)}i</div></div>`;
+            return `<div class="root-card"><div class="root-label">x${i + 1}</div><div class="root-val">${typeof r === 'number' ? r.toFixed(8) : r}</div></div>`;
         }).join('');
-
         const iters = data.iterations || [];
-        const iterHtml = iters.length ? `
-    <div style="margin-top:1rem">
-      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">
-        Iteraciones (${iters.length})
-      </div>
-      <div class="iter-scroll">
-        <table class="iter-table">
-          <thead><tr><th>N</th><th>x</th><th>f(x)</th><th>Error</th></tr></thead>
-          <tbody>${iters.slice(0, 20).map(it => `
-            <tr>
-              <td>${it.n}</td>
-              <td>${typeof it.x === 'number' ? it.x.toFixed(8) : it.x}</td>
-              <td>${typeof it.fx === 'number' ? it.fx.toExponential(3) : it.fx}</td>
-              <td>${typeof it.error === 'number' ? it.error.toExponential(3) : it.error}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>` : '';
-
-        sec.innerHTML = `
-    <div class="result-header">
-      <span style="font-size:13px;font-weight:500">Resultado</span>
-      ${badge}
-    </div>
-    ${data.warning ? `<div class="warn-msg">⚠ ${data.warning}</div>` : ''}
-    <div class="roots-row">${rootsHtml || '<span style="color:var(--muted);font-size:13px">Sin raíces reales encontradas</span>'}</div>
-    ${iterHtml}`;
+        const iterHtml = iters.length ? `<div style="margin-top:1rem"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Iteraciones (${iters.length})</div><div class="iter-scroll"><table class="iter-table"><thead><tr><th>N</th><th>x</th><th>f(x)</th><th>Error</th></tr></thead><tbody>${iters.slice(0, 20).map(it => `<tr><td>${it.n}</td><td>${typeof it.x === 'number' ? it.x.toFixed(8) : it.x}</td><td>${typeof it.fx === 'number' ? it.fx.toExponential(3) : it.fx}</td><td>${typeof it.error === 'number' ? it.error.toExponential(3) : it.error}</td></tr>`).join('')}</tbody></table></div></div>` : '';
+        sec.innerHTML = `<div class="result-header"><span style="font-size:13px;font-weight:600">Resultado</span>${badge}</div>${data.warning ? `<div class="warn-msg">⚠ ${data.warning}</div>` : ''}<div class="roots-row">${rootsHtml || '<span style="color:var(--muted);font-size:13px">Sin raíces reales encontradas</span>'}</div>${iterHtml}`;
     }
+
+    function evalEq(py, xv) {
+        try {
+            const safe = py.replace(/\bsin\b/g, 'Math.sin').replace(/\bcos\b/g, 'Math.cos').replace(/\btan\b/g, 'Math.tan').replace(/\bexp\b/g, 'Math.exp').replace(/\bsqrt\b/g, 'Math.sqrt').replace(/\blog\b/g, 'Math.log').replace(/\babs\b/g, 'Math.abs').replace(/\bln\b/g, 'Math.log').replace(/\bpi\b/g, 'Math.PI').replace(/(\d)(x)/g, '$1*$2');
+            const y = new Function('x', `"use strict";return ${safe};`)(xv);
+            return isFinite(y) ? y : null;
+        } catch {
+            return null;
+        }
+    }
+
+    function drawChart() {
+        const eq = toPython().trim();
+        const xmin = parseFloat(document.getElementById('xmin').value);
+        const xmax = parseFloat(document.getElementById('xmax').value);
+        const canvas = document.getElementById('chart-canvas');
+        const empty = document.getElementById('chart-empty');
+        if (!eq || !/x/.test(eq) || isNaN(xmin) || isNaN(xmax) || xmin >= xmax) {
+            canvas.style.display = 'none';
+            empty.style.display = 'block';
+            return;
+        }
+        canvas.style.display = 'block';
+        empty.style.display = 'none';
+        const N = 400, step = (xmax - xmin) / N;
+        const curve = [];
+        for (let i = 0; i <= N; i++) {
+            const xv = xmin + i * step;
+            curve.push({x: parseFloat(xv.toFixed(5)), y: evalEq(eq, xv)});
+        }
+        const roots = lastRoots.filter(r => r >= xmin && r <= xmax).map(r => ({x: r, y: 0}));
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(canvas, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: `f(x) = ${eq}`,
+                    data: curve,
+                    showLine: true,
+                    borderColor: '#7c6cf0',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0,
+                    spanGaps: false,
+                    backgroundColor: 'transparent',
+                    order: 2
+                }, {
+                    label: 'Raíces',
+                    data: roots,
+                    showLine: false,
+                    backgroundColor: '#38bdb4',
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    pointRadius: 7,
+                    pointHoverRadius: 9,
+                    order: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {duration: 250},
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#8882b0',
+                            font: {family: 'JetBrains Mono', size: 11},
+                            boxWidth: 12
+                        }
+                    },
+                    tooltip: {callbacks: {label: ctx => ctx.datasetIndex === 1 ? `raíz: x = ${ctx.parsed.x?.toFixed(5)}` : `f(${ctx.parsed.x?.toFixed(4)}) = ${ctx.parsed.y?.toFixed(6)}`}}
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        min: xmin,
+                        max: xmax,
+                        ticks: {color: '#8882b0', font: {family: 'JetBrains Mono', size: 10}, maxTicksLimit: 10},
+                        grid: {color: 'rgba(199,191,245,0.4)'}
+                    },
+                    y: {
+                        ticks: {color: '#8882b0', font: {family: 'JetBrains Mono', size: 10}, maxTicksLimit: 8},
+                        grid: {color: 'rgba(199,191,245,0.4)'}
+                    }
+                }
+            }
+        });
+    }
+
+    render();
 </script>
+
 </body>
 </html>

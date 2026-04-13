@@ -16,13 +16,11 @@ class CuadMod(MetodoBase):
 
         disc = b**2 - 4*a*c
 
-        # Fórmula modificada para evitar cancelación numérica
         if abs(disc) < 1e-8:
             return Resultado(roots=[-b / (2*a)],
                              warning="Raíz doble (discriminante ≈ 0).")
 
         if disc >= 0:
-            # Usar fórmula alternativa para mayor estabilidad
             sign_b = 1 if b >= 0 else -1
             q = -(b + sign_b * math.sqrt(disc)) / 2
             r1 = q / a

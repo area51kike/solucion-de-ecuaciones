@@ -2,11 +2,12 @@ import sympy as sp
 import numpy as np
 from backend.methods.base import MetodoBase, Resultado
 
+
 class Horner(MetodoBase):
     nombre = "Horner"
 
     def _calcular(self, ec: dict, params: dict) -> Resultado:
-        x    = sp.Symbol('x')
+        x = sp.Symbol('x')
         expr = ec['expr']
         poly = sp.Poly(expr, x)
         coeffs = [float(c) for c in poly.all_coeffs()]

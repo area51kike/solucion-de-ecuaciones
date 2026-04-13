@@ -4,11 +4,11 @@ class Biseccion(MetodoBase):
     nombre = "Bisección"
 
     def _calcular(self, ec: dict, params: dict) -> Resultado:
-        f      = ec['f']
-        a      = self._get_param(params, 'a',       -2.0)
-        b      = self._get_param(params, 'b',        2.0)
-        tol    = self._get_param(params, 'tol',      0.0001)
-        max_i  = self._get_param(params, 'maxIter',  100, int)
+        f     = ec['f']
+        a     = self._get_param(params, 'a',       -2.0)
+        b     = self._get_param(params, 'b',        2.0)
+        tol   = self._get_param(params, 'tol',      0.0001)
+        max_i = self._get_param(params, 'maxIter',  100, int)
 
         self._verificar_intervalo(f, a, b)
 

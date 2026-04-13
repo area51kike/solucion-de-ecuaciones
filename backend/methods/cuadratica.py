@@ -6,7 +6,6 @@ class Cuadratica(MetodoBase):
 
     def _calcular(self, ec: dict, params: dict) -> Resultado:
         f = ec['f']
-        # Detectar coeficientes evaluando en 3 puntos
         f0, f1, fm1 = f(0), f(1), f(-1)
         a = (f1 + fm1 - 2*f0) / 2
         b = (f1 - fm1) / 2

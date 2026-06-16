@@ -7,11 +7,7 @@ class Ferrari(MetodoBase):
     def _calcular(self, ec: dict, params: dict) -> Resultado:
         x    = sp.Symbol('x')
         expr = ec['expr']
-        poly = sp.Poly(expr, x)
-        coeffs = poly.all_coeffs()
-
-        if len(coeffs) != 5:
-            raise ValueError("La ecuación debe ser de grado 4 exactamente.")
+        self._verificar_polinomio(expr, 4)
 
         raices_sym = sp.solve(expr, x)
         raices = []

@@ -8,13 +8,7 @@ class Tartaglia(MetodoBase):
 
     def _calcular(self, ec: dict, params: dict) -> Resultado:
         expr = ec['expr']
-        x = sp.Symbol('x')
-        poly = sp.Poly(expr, x)
-        coeffs = poly.all_coeffs()
-
-        if len(coeffs) != 4:
-            raise ValueError("La ecuación debe ser de grado 3 exactamente.")
-
+        coeffs = self._verificar_polinomio(expr, 3)
         A, B, C, D = [float(c) for c in coeffs]
 
         p = (3 * A * C - B ** 2) / (3 * A ** 2)

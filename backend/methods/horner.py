@@ -9,8 +9,8 @@ class Horner(MetodoBase):
     def _calcular(self, ec: dict, params: dict) -> Resultado:
         x = sp.Symbol('x')
         expr = ec['expr']
-        poly = sp.Poly(expr, x)
-        coeffs = [float(c) for c in poly.all_coeffs()]
+        coeffs_sym = self._verificar_polinomio_min(expr, 2)
+        coeffs = [float(c) for c in coeffs_sym]
 
         raices_np = np.roots(coeffs)
         raices = []
@@ -20,4 +20,8 @@ class Horner(MetodoBase):
             else:
                 raices.append({"re": round(r.real, 8), "im": round(r.imag, 8)})
 
-        return Resultado(roots=raices)
+        todas_complejas = all(isinstance(r, dict) for r in raices)
+        return Resultado(
+            roots=raices,
+            warning="Todas las raíces son complejas. La función no tiene raíces reales." if todas_complejas else None
+        )

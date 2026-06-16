@@ -5,10 +5,9 @@ class Lineal(MetodoBase):
     nombre = "Lineal"
 
     def _calcular(self, ec: dict, params: dict) -> Resultado:
-        f = ec['f']
-        fa = f(0)
-        slope = f(1) - fa
-        if abs(slope) < 1e-12:
-            raise ValueError("La ecuación no tiene pendiente. ¿Es realmente lineal?")
-        root = -fa / slope
+        coeffs = self._verificar_polinomio(ec['expr'], 1)
+        a, b = float(coeffs[0]), float(coeffs[1])
+        if abs(a) < 1e-12:
+            raise ValueError("El coeficiente principal (de x) es cero. La ecuación no es lineal.")
+        root = -b / a
         return Resultado(roots=[root])

@@ -4,10 +4,227 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ecuaciones Solver</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap"
-          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+    <style>
+    /*LAYOUT 3 COLUMNAS */
+    .main-grid {
+        display: grid;
+        /* Gráfica| calculadora| derecha */
+        grid-template-columns: 2.3fr 1.5fr 1fr;
+        gap: 1.2rem;
+        align-items: start;
+    }
+    @media (max-width: 1300px) {
+        .main-grid { grid-template-columns: 1fr 460px; }
+        .col-right  { grid-column: 1 / -1; }
+    }
+    @media (max-width: 820px) {
+        .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Columna izquierda — gráfica */
+    .col-chart {
+        position: sticky;
+        top: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: .75rem;
+    }
+
+    /* Columna centro — calculadora */
+    .col-calc {
+        position: sticky;
+        top: 1.1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Columna derecha — métodos + parámetros + resultado */
+    .col-right {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* ── Panel gráfica ── */
+    .chart-panel {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1rem 1rem .75rem;
+        box-shadow: 0 2px 14px rgba(124,108,240,.07);
+    }
+    .chart-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: .55rem;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+    #ggb-container {
+        width: 100%;
+        height: 480px;
+        border-radius: var(--r-md);
+        overflow: hidden;
+        border: 1.5px solid var(--border);
+        background: var(--surface2);
+    }
+    #ggb-leyenda {
+        display: none;
+        margin-top: 6px;
+        font-family: var(--mono);
+        font-size: 17px;
+        color: var(--muted);
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* Nota de aviso debajo de la gráfica */
+    .chart-tip {
+        background: rgb(41 43 44 / 0.98);
+        border: 1.5px solid rgb(41 43 44 / 0.98);
+        border-radius: var(--r-sm);
+        padding: 8px 12px;
+        font-family: var(--mono);
+        font-size: 13px;
+       color: #ffffff;
+        line-height: 1.5;
+    }
+    .chart-tip strong { color: #60ea4d; }
+
+    /* Controles gráfica */
+    .chart-controls { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .chart-controls label {
+        font-family: var(--mono); font-size: 14px;
+        color: var(--muted); text-transform: uppercase; letter-spacing: .08em;
+    }
+    .chart-controls input {
+        width: 68px; padding: 6px 8px;
+        font-family: var(--mono); font-size: 15px;
+        background: var(--surface2); border: 1.5px solid rgb(13 12 12 / 0.98);
+        border-radius: var(--r-sm); color: #ffffff; outline: none;
+        transition: border-color .15s;
+    }
+    .chart-controls input:focus { border-color: var(--accent); }
+    .chart-btn {
+        padding: 6px 16px; font-family: var(--mono); font-size: 14px; font-weight: 700;
+        background: var(--accent); border: none;
+        border-radius: var(--r-sm); color: #fff; cursor: pointer;
+        transition: all .15s; letter-spacing: .04em;
+        box-shadow: 0 2px 8px rgba(124,108,240,.3);
+    }
+    .chart-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    /* ── Panel métodos (columna derecha arriba) ── */
+    .methods-panel {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1rem;
+        box-shadow: 0 2px 14px rgba(124,108,240,.07);
+    }
+    .methods-panel .panel-title { margin-bottom: .65rem; }
+    .methods-panel .method-group { margin-bottom: .6rem; }
+    .methods-panel .method-group:last-child { margin-bottom: 0; }
+    .methods-panel .group-label {
+        font-family: var(--mono); font-size: 9px; font-weight: 700;
+        color: var(--accent); text-transform: uppercase;
+        letter-spacing: .14em; margin-bottom: 4px; padding-left: 2px;
+    }
+    .methods-panel .pills { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    /* ── Panel parámetros (columna derecha medio) ── */
+    #params-panel {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1rem;
+        box-shadow: 0 2px 14px rgba(124,108,240,.07);
+        display: none; /* se muestra solo cuando hay parámetros */
+    }
+    #params-panel .panel-title { margin-bottom: .65rem; }
+
+    /* ── Panel resultado (columna derecha abajo) ── */
+    #result-section {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 1rem;
+        min-height: 110px;
+        box-shadow: 0 2px 14px rgba(124,108,240,.06);
+    }
+
+    /* ── Calculadora pantalla  ── */
+    .math-display {
+        min-height: 64px !important;
+        font-size: 17px;
+        padding: 11px 15px !important;
+        cursor: text;
+    }
+    .mt { font-size: 18px !important; }
+
+    /* Botones de función */
+    .kb-fn, .kb-var, .kb-struct, .kb-const, .kb-op {
+        height: 40px !important;
+        min-width: 44px !important;
+        font-size: 17px !important;
+    }
+    .kb-var { font-size: 17px !important; }
+
+    /* Grid de funciones — 4 columnas */
+    .kb-fn-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+    .kb-fn-grid .kb-btn {
+        height: 38px;
+        font-size: 17px !important;
+        padding: 0 4px;
+        min-width: unset;
+    }
+
+    /* Tablero numérico con operadores al lado */
+    .kb-numpad-section {
+        display: flex;
+        gap: 0;
+        align-items: stretch;
+    }
+    .kb-numpad-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        flex: 1;
+    }
+
+    /* Raíz n-ésima — ícono */
+    .kb-nroot-icon { display: inline-flex; align-items: flex-start; gap: 1px; }
+    .kb-nroot-icon sup { font-size: 9px; line-height: 1; margin-top: 1px; }
+
+    /* ── Usar TODO el ancho disponible ── */
+    .container {
+        max-width: 1600px !important;
+        width: 100% !important;
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── Tabla de iteraciones sin scroll horizontal ── */
+    .iter-scroll { overflow-x: hidden !important; }
+    .iter-table { width: 100% !important; table-layout: fixed !important; }
+    .iter-table th, .iter-table td {
+        overflow: hidden; white-space: nowrap;
+        padding: 4px 8px !important; font-size: 12px !important;
+    }
+    .iter-table th:nth-child(1), .iter-table td:nth-child(1) { width: 26px; }
+    .iter-table th:nth-child(2), .iter-table td:nth-child(2) { width: 30%; }
+    .iter-table th:nth-child(3), .iter-table td:nth-child(3) { width: 30%; }
+    .iter-table th:nth-child(4), .iter-table td:nth-child(4) { width: auto; }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -18,92 +235,105 @@
             <span id="status-text">conectando...</span>
         </div>
     </header>
+
+    <!-- ══ GRID 3 COLUMNAS ══ -->
     <div class="main-grid">
-        <div class="col-left">
-            <div class="panel" style="flex:1">
-                <div class="panel-title">Método</div>
-                <div class="method-group">
-                    <div class="group-label">Cerrados</div>
-                    <div class="pills">
-                        <button class="pill" data-method="biseccion" onclick="selectMethod(this)">Bisección</button>
-                        <button class="pill" data-method="falsa_posicion" onclick="selectMethod(this)">Falsa posición
-                        </button>
+
+        <!-- ══ COLUMNA IZQUIERDA: Gráfica ══ -->
+        <div class="col-chart">
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <span class="panel-title" style="margin:0">Gráfica f(x)</span>
+                    <div class="chart-controls">
+                        <label>x min</label>
+                        <input id="xmin" value="-5" type="number" step="1">
+                        <label>x max</label>
+                        <input id="xmax" value="5"  type="number" step="1">
+                        <button class="chart-btn" onclick="GraficaGGB.redibujar()">Graficar</button>
                     </div>
                 </div>
-                <div class="method-group">
-                    <div class="group-label">Abiertos</div>
-                    <div class="pills">
-                        <button class="pill" data-method="punto_fijo" onclick="selectMethod(this)">Punto fijo</button>
-                        <button class="pill" data-method="newton" onclick="selectMethod(this)">Newton-Raphson</button>
-                        <button class="pill" data-method="newton_mod" onclick="selectMethod(this)">Newton mejorado
-                        </button>
-                        <button class="pill" data-method="secante" onclick="selectMethod(this)">Secante</button>
-                    </div>
-                </div>
-                <div class="method-group">
-                    <div class="group-label">Algebraicos</div>
-                    <div class="pills">
-                        <button class="pill" data-method="lineal" onclick="selectMethod(this)">Lineal</button>
-                        <button class="pill" data-method="cuadratica" onclick="selectMethod(this)">Cuadrática</button>
-                        <button class="pill" data-method="cuad_mod" onclick="selectMethod(this)">Cuad. mod.</button>
-                        <button class="pill" data-method="tartaglia" onclick="selectMethod(this)">Tartaglia</button>
-                        <button class="pill" data-method="ferrari" onclick="selectMethod(this)">Ferrari</button>
-                        <button class="pill" data-method="horner" onclick="selectMethod(this)">Horner</button>
-                        <button class="pill" data-method="muller" onclick="selectMethod(this)">Müller</button>
-                        <button class="pill" data-method="bairstow" onclick="selectMethod(this)">Bairstow</button>
-                        <button class="pill" data-method="bairstow2" onclick="selectMethod(this)">Bairstow 2</button>
-                    </div>
-                </div>
+                <div id="ggb-container"></div>
+                <div id="ggb-leyenda"></div>
+            </div>
+            <div class="chart-tip">
+                <strong>Consejo:</strong> ajusta <strong>x min</strong> y <strong>x max</strong>
+                según el dominio de tu ecuación para visualizar correctamente la función
+                y sus raíces. Por ejemplo, para <code>ln(x)</code> usa x min = 0.1.
             </div>
         </div>
-        <div class="col-right">
+
+        <!-- ══ COLUMNA CENTRAL: Calculadora ══ -->
+        <div class="col-calc">
             <div class="panel">
                 <div class="panel-title">Ecuación f(x)</div>
+                <!-- Pantalla de la ecuación -->
                 <div class="math-display" id="math-display" onclick="onDisplayClick(event)">
                     <span class="math-cursor" id="math-cursor"></span>
                 </div>
                 <div class="eq-preview" id="eq-preview"></div>
+
+                <!-- Teclado matemático -->
                 <div class="mathkb">
+
+                    <!-- Fila 1: Variable + constantes + estructura -->
                     <div>
-                        <div class="kb-section-label">Variable &amp; Funciones</div>
+                        <div class="kb-section-label">Variable &amp; Estructura</div>
                         <div class="kb-row">
-                            <button class="kb-btn kb-var" onclick="edInsertRaw('x')">x</button>
+                            <button class="kb-btn kb-var"   onclick="edInsertRaw('x')">x</button>
                             <div class="kb-sep"></div>
+                            <button class="kb-btn kb-op"    onclick="edInsertRaw('(')">(</button>
+                            <button class="kb-btn kb-op"    onclick="edInsertRaw(')')">)</button>
+                            <div class="kb-sep"></div>
+                            <button class="kb-btn kb-const" onclick="edInsertRaw('pi')">π</button>
+                            <button class="kb-btn kb-const" onclick="edInsertRaw('e')">e</button>
+                            <div class="kb-sep"></div>
+                            <button class="kb-btn kb-struct" onclick="edInsertFrac()" title="Fracción">
+                                <span class="kb-frac-icon"><span class="kb-frac-icon-top">a</span><span class="kb-frac-icon-bot">b</span></span>
+                            </button>
+                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','')"  title="xⁿ"><span class="kb-pow-icon">x<sup>n</sup></span></button>
+                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','2')" title="x²"><span class="kb-pow-icon">x<sup>2</sup></span></button>
+                            <button class="kb-btn kb-struct" onclick="edInsertNthRoot()" title="Raíz n-ésima">
+                                <span class="kb-nroot-icon"><sup>n</sup>√</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Todas las funciones en grid 4 cols -->
+                    <div>
+                        <div class="kb-section-label">Funciones</div>
+                        <div class="kb-fn-grid">
                             <button class="kb-btn kb-fn" onclick="edInsertRaw('sin(')">sin</button>
                             <button class="kb-btn kb-fn" onclick="edInsertRaw('cos(')">cos</button>
                             <button class="kb-btn kb-fn" onclick="edInsertRaw('tan(')">tan</button>
                             <button class="kb-btn kb-fn" onclick="edInsertRaw('exp(')">exp</button>
-                            <button class="kb-btn kb-fn" onclick="edInsertRaw('log(')">log</button>
+
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('asin(')" title="arcoseno">asin</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('acos(')" title="arcocoseno">acos</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('atan(')" title="arcotangente">atan</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('atan2(')" title="atan2">atan2</button>
+
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('sinh(')" title="seno hip.">sinh</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('cosh(')" title="coseno hip.">cosh</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('tanh(')" title="tangente hip.">tanh</button>
                             <button class="kb-btn kb-fn" onclick="edInsertRaw('ln(')">ln</button>
+
+                            <button class="kb-btn kb-fn" onclick="insertRecip('sin')" title="1/sin(x)">csc</button>
+                            <button class="kb-btn kb-fn" onclick="insertRecip('cos')" title="1/cos(x)">sec</button>
+                            <button class="kb-btn kb-fn" onclick="insertRecip('tan')" title="1/tan(x)">cot</button>
+                            <button class="kb-btn kb-fn" onclick="edInsertRaw('log10(')" title="log base 10">log₁₀</button>
+
+                           <button class="kb-btn kb-fn" onclick="edInsertSqrt()">√x</button>
+                           <button class="kb-btn kb-fn" onclick="edInsertCbrt()">∛x</button>
                             <button class="kb-btn kb-fn" onclick="edInsertRaw('abs(')">|x|</button>
+                            <button class="kb-btn kb-clr" onclick="edClear()">CLR</button>
                         </div>
                     </div>
-                    <div>
-                        <div class="kb-section-label">Estructura &amp; Constantes</div>
-                        <div class="kb-row">
-                            <button class="kb-btn kb-struct" onclick="edInsertFrac()" title="Fracción">
-                                <span class="kb-frac-icon"><span class="kb-frac-icon-top">a</span><span
-                                        class="kb-frac-icon-bot">b</span></span>
-                            </button>
-                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','')" title="xⁿ"><span
-                                    class="kb-pow-icon">x<sup>n</sup></span></button>
-                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','2')" title="x²"><span
-                                    class="kb-pow-icon">x<sup>2</sup></span></button>
-                            <button class="kb-btn kb-struct" onclick="edInsertPow('x','3')" title="x³"><span
-                                    class="kb-pow-icon">x<sup>3</sup></span></button>
-                            <button class="kb-btn kb-struct" onclick="edInsertSqrt()">√</button>
-                            <div class="kb-sep"></div>
-                            <button class="kb-btn kb-op" onclick="edInsertRaw('(')">(</button>
-                            <button class="kb-btn kb-op" onclick="edInsertRaw(')')">)</button>
-                            <div class="kb-sep"></div>
-                            <button class="kb-btn kb-const" onclick="edInsertRaw('pi')">π</button>
-                            <button class="kb-btn kb-const" onclick="edInsertRaw('e')">e</button>
-                        </div>
-                    </div>
+
+                    <!-- Tablero numérico -->
                     <div>
                         <div class="kb-section-label">Tablero numérico</div>
                         <div class="kb-numpad-section">
-                            <div>
+                            <div style="flex:1">
                                 <div class="kb-numpad-grid">
                                     <button class="kb-btn kb-num" onclick="edInsertRaw('7')">7</button>
                                     <button class="kb-btn kb-num" onclick="edInsertRaw('8')">8</button>
@@ -116,12 +346,8 @@
                                     <button class="kb-btn kb-num" onclick="edInsertRaw('3')">3</button>
                                 </div>
                                 <div style="display:flex;gap:5px;margin-top:5px;">
-                                    <button class="kb-btn kb-num" style="flex:1;height:40px;font-size:15px;"
-                                            onclick="edInsertRaw('0')">0
-                                    </button>
-                                    <button class="kb-btn kb-num" style="width:44px;min-width:44px;height:40px;"
-                                            onclick="edInsertRaw('.')">.
-                                    </button>
+                                    <button class="kb-btn kb-num" style="flex:1;height:42px;font-size:16px;" onclick="edInsertRaw('0')">0</button>
+                                    <button class="kb-btn kb-num" style="width:46px;min-width:46px;height:42px;" onclick="edInsertRaw('.')">.</button>
                                 </div>
                             </div>
                             <div class="kb-sep" style="height:auto;margin:0 6px;"></div>
@@ -134,689 +360,830 @@
                             <div class="kb-sep" style="height:auto;margin:0 6px;"></div>
                             <div class="kb-numpad-ops">
                                 <button class="kb-btn kb-del" onclick="edDelete()" title="Borrar">⌫</button>
-                                <button class="kb-btn kb-clr" onclick="edClear()">CLR</button>
+
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="quick-wrap" id="quick-eqs"></div>
-                <div class="warning" id="method-warning"></div>
-                <div id="params-section"></div>
-                <button class="solve-btn" id="solve-btn" onclick="solve()" disabled>Selecciona un método</button>
-            </div>
-            <div class="bottom-grid">
-                <div class="result-panel" id="result-section">
-                    <div class="empty-state">→ Selecciona un método e ingresa una ecuación</div>
-                </div>
-                <div class="chart-panel">
-                    <div class="result-header">
-                        <span class="panel-title" style="margin:0">Gráfica f(x)</span>
-                    </div>
-                    <div class="chart-controls">
-                        <label>x min</label><input id="xmin" value="-5" type="number" step="1">
-                        <label>x max</label><input id="xmax" value="5" type="number" step="1">
-                        <button class="chart-btn" onclick="drawChart()">Graficar</button>
-                    </div>
-                    <canvas id="chart-canvas" height="230"></canvas>
-                    <div id="chart-empty" class="empty-state">→ Ingresa una ecuación para graficar</div>
-                </div>
+                <!-- El warning solo se muestra al calcular, no en tiempo real -->
+                <div class="warning" id="method-warning" style="display:none"></div>
+                <!-- Botón Calcular ahora en la calculadora -->
+                <button class="solve-btn" id="solve-btn" onclick="solve()" disabled>Selecciona un método →</button>
             </div>
         </div>
-    </div>
-</div>
+
+        <!-- ══ COLUMNA DERECHA: Métodos + Parámetros + Resultado ══ -->
+        <div class="col-right">
+
+            <!-- Panel métodos -->
+            <div class="methods-panel">
+                <div class="panel-title">Métodos de resolución</div>
+                <div class="method-group">
+                    <div class="group-label">Cerrados</div>
+                    <div class="pills">
+                        <button class="pill" data-method="biseccion"      onclick="selectMethod(this)">Bisección</button>
+                        <button class="pill" data-method="falsa_posicion" onclick="selectMethod(this)">Falsa posición</button>
+                    </div>
+                </div>
+                <div class="method-group">
+                    <div class="group-label">Abiertos</div>
+                    <div class="pills">
+                        <button class="pill" data-method="punto_fijo"  onclick="selectMethod(this)">Punto fijo</button>
+                        <button class="pill" data-method="newton"      onclick="selectMethod(this)">Newton-Raphson</button>
+                        <button class="pill" data-method="newton_mod"  onclick="selectMethod(this)">Newton mejorado</button>
+                        <button class="pill" data-method="secante"     onclick="selectMethod(this)">Secante</button>
+                    </div>
+                </div>
+                <div class="method-group">
+                    <div class="group-label">Algebraicos</div>
+                    <div class="pills">
+                        <button class="pill" data-method="lineal"     onclick="selectMethod(this)">Lineal</button>
+                        <button class="pill" data-method="cuadratica" onclick="selectMethod(this)">Cuadrática</button>
+                        <button class="pill" data-method="cuad_mod"   onclick="selectMethod(this)">Cuad. mod.</button>
+                        <button class="pill" data-method="tartaglia"  onclick="selectMethod(this)">Tartaglia</button>
+                        <button class="pill" data-method="ferrari"    onclick="selectMethod(this)">Ferrari</button>
+                        <button class="pill" data-method="horner"     onclick="selectMethod(this)">Horner</button>
+                        <button class="pill" data-method="muller"     onclick="selectMethod(this)">Müller</button>
+                        <button class="pill" data-method="bairstow"   onclick="selectMethod(this)">Bairstow</button>
+                        <button class="pill" data-method="bairstow2"  onclick="selectMethod(this)">Bairstow 2</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel parámetros (se muestra aquí, no en la calculadora) -->
+            <div id="params-panel">
+                <div class="panel-title">Parámetros</div>
+                <div id="params-section"></div>
+            </div>
+
+            <!-- Panel resultado + iteraciones -->
+            <div id="result-section">
+                <div class="empty-state">
+                    <div style="font-size:30px;margin-bottom:.5rem">→</div>
+                    Selecciona un método e<br>ingresa una ecuación
+                </div>
+            </div>
+
+        </div>
+    </div><!-- /main-grid -->
+</div><!-- /container -->
+
 <script>
-    let nodes = [], cursor = 0, edFocused = false;
-    const disp = document.getElementById('math-display'), curEl = document.getElementById('math-cursor'),
-        prevEl = document.getElementById('eq-preview');
+// ══════════════════════════════════════════════════════════════
+//  EDITOR MATEMÁTICO
+// ══════════════════════════════════════════════════════════════
+let nodes = [], cursor = 0, edFocused = false;
+const disp   = document.getElementById('math-display');
+const curEl  = document.getElementById('math-cursor');
+const prevEl = document.getElementById('eq-preview');
 
-    function toPython() {
-        return nodes.map(n => {
-            if (n.type === 'text') return n.val;
-            if (n.type === 'frac') return `(${n.num || '0'})/(${n.den || '1'})`;
-            if (n.type === 'pow') return `${n.base}**(${n.exp || '1'})`;
-            if (n.type === 'sqrt') return `sqrt(${n.inner || '0'})`;
-            return '';
-        }).join('');
+// ── Multiplicación implícita automática ──
+function applyImplicitMul(expr) {
+    let e = expr;
+
+    // 1. Proteger nombres de funciones conocidas
+    const fns = ['asin','acos','atan2','atan','sinh','cosh','tanh',
+                  'sin','cos','tan','exp','log10','log','ln','sqrt','cbrt','abs','floor'];
+    const placeholders = {};
+    fns.forEach((fn, i) => {
+        const tok = `__FN${i}__`;
+        placeholders[tok] = fn;
+        const re = new RegExp(`\\b${fn}\\b`, 'g');
+        e = e.replace(re, tok);
+    });
+
+    // 2. Con espacio: "e x" → "e*x", "2 x" → "2*x", "7 __FN__" → "7*__FN__"
+    e = e.replace(/\b(e|pi|\d+(?:\.\d+)?)\s+(x\b|e\b|pi\b|__FN\d+__|[\(])/g, '$1*$2');
+    e = e.replace(/\b(x)\s+(e\b|pi\b|__FN\d+__|[\(]|\d)/g, '$1*$2');
+    e = e.replace(/\)\s+(\w|__FN\d+__|[\(])/g, ')*$1');
+
+    // 3. Sin espacio: "ex" → "e*x", "7x" → "7*x", etc.
+    e = e.replace(/(\d+(?:\.\d+)?)(x\b)/g, '$1*$2');
+    e = e.replace(/(\d+(?:\.\d+)?)(\()/g, '$1*(');
+    e = e.replace(/(\d+(?:\.\d+)?)(pi\b)/g, '$1*$2');
+    e = e.replace(/(\d+(?:\.\d+)?)(e)(?![a-zA-Z_])/g, '$1*$2');
+    // 'e' sola (Euler) seguida de x, (, o pi — sin espacio
+    e = e.replace(/(?<![a-zA-Z_0-9])(e)(x)(?![a-zA-Z_])/g, '$1*$2');
+    e = e.replace(/(?<![a-zA-Z_0-9])(e)(\()/g, '$1*($2');
+    e = e.replace(/(?<![a-zA-Z_0-9])(e)(pi\b)/g, '$1*$2');
+    e = e.replace(/(pi)(x\b|\()/g, '$1*$2');
+    e = e.replace(/\)(x\b|e\b|pi\b|\d|\()/g, ')*$1');
+    e = e.replace(/(x)(\(|\d)/g, '$1*$2');
+    e = e.replace(/(x)(e)(?![a-zA-Z_])/g, '$1*$2');
+
+    // 4. Restaurar nombres de funciones
+    Object.entries(placeholders).forEach(([tok, fn]) => {
+        e = e.replaceAll(tok, fn);
+    });
+
+    return e;
+}
+
+function toPython() {
+    // Unimos con un separador de espacio para que las regex de límite funcionen
+    // entre tokens adyacentes (p.ej. nodo "e" + nodo "x" → "e x" → "e*x")
+    const parts = nodes.map(n => {
+        if (n.type === 'text') return n.val;
+        if (n.type === 'frac') return `(${n.num||'0'})/(${n.den||'1'})`;
+        if (n.type === 'pow')  return `${n.base}**(${n.exp||'1'})`;
+        if (n.type === 'sqrt') return `sqrt(${n.inner||'0'})`;
+        if (n.type === 'cbrt') return `cbrt(${n.inner||'0'})`;
+        if (n.type === 'nroot') return `(${n.inner||'0'})**(1/(${n.degree||'2'}))`;
+        return '';
+    });
+    // Unir con espacio y luego aplicar multiplicación implícita
+    const raw = parts.join(' ').replace(/\s+/g, ' ').trim();
+    const result = applyImplicitMul(raw);
+    // Eliminar espacios sobrantes que no afecten la sintaxis Python
+    return result.replace(/\s+/g, '');
+}
+
+function render() {
+    disp.innerHTML = '';
+    for (let i = 0; i <= nodes.length; i++) {
+        if (i === cursor) disp.appendChild(curEl);
+        if (i < nodes.length) disp.appendChild(buildEl(nodes[i], i));
     }
+    const py = toPython();
+    syncPreview(py);
+    // NO llamar syncWarnings aquí — solo al calcular
+    syncBtn(py);
+    clearTimeout(window._ct);
+    window._ct = setTimeout(() => GraficaGGB.graficarAuto(py), 5000);
+}
 
-    function render() {
-        disp.innerHTML = '';
-        for (let i = 0; i <= nodes.length; i++) {
-            if (i === cursor) disp.appendChild(curEl);
-            if (i < nodes.length) disp.appendChild(buildEl(nodes[i], i));
-        }
-        const py = toPython();
-        syncPreview(py);
-        syncWarnings(py);
-        syncBtn(py);
-        clearTimeout(window._ct);
-        window._ct = setTimeout(drawChart, 600);
+function buildEl(n, idx) {
+    if (n.type === 'text') {
+        const sp = document.createElement('span');
+        sp.className = `mt ${tokenClass(n.val)}`;
+        sp.textContent = n.val;
+        sp.onclick = e => { cursor = idx + 1; render(); e.stopPropagation(); };
+        return sp;
     }
-
-    function buildEl(n, idx) {
-        if (n.type === 'text') {
-            const sp = document.createElement('span');
-            sp.className = `mt ${tokenClass(n.val)}`;
-            sp.textContent = n.val;
-            sp.onclick = e => {
-                cursor = idx + 1;
-                render();
-                e.stopPropagation();
-            };
-            return sp;
-        }
-        if (n.type === 'frac') {
-            const w = ce('span', 'mfrac');
-            const numEl = ce('span', 'mfrac-num');
-            numEl.contentEditable = true;
-            numEl.spellcheck = false;
-            numEl.setAttribute('data-ph', '■');
-            numEl.textContent = n.num || '';
-            numEl.oninput = () => {
-                n.num = numEl.textContent;
-                syncAll();
-            };
-            numEl.onkeydown = e => {
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    denEl.focus();
-                }
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    cursor = idx + 1;
-                    render();
-                }
-                if (e.key === 'Backspace' && !numEl.textContent) {
-                    e.preventDefault();
-                    edDeleteNode(idx);
-                }
-            };
-            addCEFocus(numEl);
-            const bar = ce('span', 'mfrac-bar');
-            const denEl = ce('span', 'mfrac-den');
-            denEl.contentEditable = true;
-            denEl.spellcheck = false;
-            denEl.setAttribute('data-ph', '■');
-            denEl.textContent = n.den || '';
-            denEl.oninput = () => {
-                n.den = denEl.textContent;
-                syncAll();
-            };
-            denEl.onkeydown = e => {
-                if (e.key === 'Tab' || e.key === 'Enter') {
-                    e.preventDefault();
-                    cursor = idx + 1;
-                    render();
-                }
-            };
-            addCEFocus(denEl);
-            w.appendChild(numEl);
-            w.appendChild(bar);
-            w.appendChild(denEl);
-            w.onclick = e => {
-                cursor = idx;
-                e.stopPropagation();
-            };
-            return w;
-        }
-        if (n.type === 'pow') {
-            const w = ce('span', 'mpow');
-            const baseEl = ce('span', 'mpow-base');
-            baseEl.textContent = n.base;
-            const expEl = ce('span', 'mpow-exp');
-            expEl.contentEditable = true;
-            expEl.spellcheck = false;
-            expEl.textContent = n.exp || '';
-            expEl.oninput = () => {
-                n.exp = expEl.textContent;
-                syncAll();
-            };
-            expEl.onkeydown = e => {
-                if (e.key === 'Tab' || e.key === 'Enter') {
-                    e.preventDefault();
-                    cursor = idx + 1;
-                    render();
-                }
-                if (e.key === 'Backspace' && !expEl.textContent) {
-                    e.preventDefault();
-                    edDeleteNode(idx);
-                }
-            };
-            addCEFocus(expEl);
-            w.appendChild(baseEl);
-            w.appendChild(expEl);
-            w.onclick = e => {
-                cursor = idx;
-                e.stopPropagation();
-            };
-            return w;
-        }
-        if (n.type === 'sqrt') {
-            const w = ce('span', 'msqrt');
-            const sym = ce('span', 'msqrt-sym');
-            sym.textContent = '√';
-            const body = ce('span', 'msqrt-body');
-            body.contentEditable = true;
-            body.spellcheck = false;
-            body.textContent = n.inner || '';
-            body.oninput = () => {
-                n.inner = body.textContent;
-                syncAll();
-            };
-            body.onkeydown = e => {
-                if (e.key === 'Tab' || e.key === 'Enter') {
-                    e.preventDefault();
-                    cursor = idx + 1;
-                    render();
-                }
-                if (e.key === 'Backspace' && !body.textContent) {
-                    e.preventDefault();
-                    edDeleteNode(idx);
-                }
-            };
-            addCEFocus(body);
-            w.appendChild(sym);
-            w.appendChild(body);
-            w.onclick = e => {
-                cursor = idx;
-                e.stopPropagation();
-            };
-            return w;
-        }
-        return document.createElement('span');
-    }
-
-    function ce(tag, cls) {
-        const el = document.createElement(tag);
-        if (cls) el.className = cls;
-        return el;
-    }
-
-    function addCEFocus(el) {
-        el.onfocus = () => {
-            edFocused = true;
-            disp.classList.add('focused');
+    if (n.type === 'frac') {
+        const w = ce('span','mfrac');
+        const numEl = ce('span','mfrac-num'); numEl.contentEditable = true; numEl.spellcheck = false;
+        numEl.setAttribute('data-ph','■'); numEl.textContent = n.num || '';
+        numEl.oninput = () => { n.num = numEl.textContent; syncAll(); };
+        numEl.onkeydown = e => {
+            if (e.key==='Tab')      { e.preventDefault(); denEl.focus(); }
+            if (e.key==='Enter')    { e.preventDefault(); cursor = idx+1; render(); disp.focus && disp.focus(); }
+            if (e.key==='Backspace' && !numEl.textContent) { e.preventDefault(); edDeleteNode(idx); }
         };
-        el.onclick = e => e.stopPropagation();
+        addCEFocus(numEl);
+        const bar   = ce('span','mfrac-bar');
+        const denEl = ce('span','mfrac-den'); denEl.contentEditable = true; denEl.spellcheck = false;
+        denEl.setAttribute('data-ph','■'); denEl.textContent = n.den || '';
+        denEl.oninput = () => { n.den = denEl.textContent; syncAll(); };
+        denEl.onkeydown = e => {
+            if (e.key==='Tab'||e.key==='Enter') { e.preventDefault(); cursor = idx+1; render(); }
+        };
+        addCEFocus(denEl);
+        w.appendChild(numEl); w.appendChild(bar); w.appendChild(denEl);
+        w.onclick = e => { cursor = idx; e.stopPropagation(); };
+        return w;
     }
-
-    function tokenClass(v) {
-        if (/^x$/.test(v)) return 'mt-x';
-        if (/^(sin|cos|tan|exp|log|sqrt|ln|abs)/.test(v)) return 'mt-fn';
-        if (/^[+\-*/]$/.test(v)) return 'mt-op';
-        if (/^[\d.]+$/.test(v)) return 'mt-num';
-        return 'mt-misc';
+    if (n.type === 'pow') {
+        const w     = ce('span','mpow');
+        const baseEl = ce('span','mpow-base'); baseEl.textContent = n.base;
+        const expEl  = ce('span','mpow-exp');  expEl.contentEditable = true; expEl.spellcheck = false;
+        expEl.textContent = n.exp || '';
+        expEl.oninput = () => { n.exp = expEl.textContent; syncAll(); };
+        expEl.onkeydown = e => {
+            if (e.key==='Tab'||e.key==='Enter')  { e.preventDefault(); cursor = idx+1; render(); }
+            if (e.key==='Backspace' && !expEl.textContent) { e.preventDefault(); edDeleteNode(idx); }
+        };
+        addCEFocus(expEl);
+        w.appendChild(baseEl); w.appendChild(expEl);
+        w.onclick = e => { cursor = idx; e.stopPropagation(); };
+        return w;
     }
-
-    function syncAll() {
-        const py = toPython();
-        syncPreview(py);
-        syncWarnings(py);
-        syncBtn(py);
-        clearTimeout(window._ct);
-        window._ct = setTimeout(drawChart, 600);
+    if (n.type === 'sqrt' || n.type === 'cbrt') {
+        const isCbrt = n.type === 'cbrt';
+        const w    = ce('span','msqrt');
+        const sym  = ce('span','msqrt-sym'); sym.textContent = isCbrt ? '∛' : '√';
+        const body = ce('span','msqrt-body'); body.contentEditable = true; body.spellcheck = false;
+        body.textContent = n.inner || '';
+        body.oninput = () => { n.inner = body.textContent; syncAll(); };
+        body.onkeydown = e => {
+            if (e.key==='Tab'||e.key==='Enter')  { e.preventDefault(); cursor = idx+1; render(); }
+            if (e.key==='Backspace' && !body.textContent) { e.preventDefault(); edDeleteNode(idx); }
+        };
+        addCEFocus(body);
+        w.appendChild(sym); w.appendChild(body);
+        w.onclick = e => { cursor = idx; e.stopPropagation(); };
+        return w;
     }
-
-    function syncPreview(py) {
-        if (!py) {
-            prevEl.textContent = '';
-            return;
-        }
-        if (!/x/.test(py)) {
-            prevEl.textContent = '⚠ La ecuación debe contener x';
-            return;
-        }
-        prevEl.textContent = 'f(x) = ' + py.replace(/\*\*/g, 'ˆ').replace(/\*/g, '·');
+    if (n.type === 'nroot') {
+        const w      = ce('span','msqrt');
+        const sym    = ce('span','msqrt-sym');
+        const degEl  = ce('span'); degEl.style.cssText = 'font-size:10px;vertical-align:super;';
+        degEl.contentEditable = true; degEl.spellcheck = false;
+        degEl.textContent = n.degree || 'n';
+        degEl.oninput = () => { n.degree = degEl.textContent; syncAll(); };
+        addCEFocus(degEl);
+        sym.appendChild(degEl);
+        const symTxt = document.createTextNode('√');
+        sym.appendChild(symTxt);
+        const body = ce('span','msqrt-body'); body.contentEditable = true; body.spellcheck = false;
+        body.textContent = n.inner || '';
+        body.oninput = () => { n.inner = body.textContent; syncAll(); };
+        body.onkeydown = e => {
+            if (e.key==='Tab'||e.key==='Enter')  { e.preventDefault(); cursor = idx+1; render(); }
+            if (e.key==='Backspace' && !body.textContent) { e.preventDefault(); edDeleteNode(idx); }
+        };
+        addCEFocus(body);
+        w.appendChild(sym); w.appendChild(body);
+        w.onclick = e => { cursor = idx; e.stopPropagation(); };
+        return w;
     }
+    return document.createElement('span');
+}
 
-    function onDisplayClick(e) {
-        edFocused = true;
-        disp.classList.add('focused');
-        if (e.target === disp) {
-            cursor = nodes.length;
-            render();
-        }
-    }
+function ce(tag, cls) { const el = document.createElement(tag); if (cls) el.className = cls; return el; }
 
-    document.addEventListener('click', e => {
-        if (!disp.contains(e.target) && !e.target.closest('.mathkb')) {
-            edFocused = false;
-            disp.classList.remove('focused');
-        }
-    });
-    document.addEventListener('keydown', e => {
-        if (document.activeElement && document.activeElement.contentEditable === 'true') return;
-        if (!edFocused) return;
-        if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            cursor = Math.max(0, cursor - 1);
-            render();
-            return;
-        }
-        if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            cursor = Math.min(nodes.length, cursor + 1);
-            render();
-            return;
-        }
-        if (e.key === 'Backspace') {
-            e.preventDefault();
-            edDelete();
-            return;
-        }
-        if (e.key === 'Escape') {
-            edFocused = false;
-            disp.classList.remove('focused');
-            return;
-        }
-        const ch = e.key;
-        if (ch.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            e.preventDefault();
-            ch === '^' ? edInsertPow('x', '') : edInsertRaw(ch);
-        }
-    });
+function addCEFocus(el) {
+    el.onfocus = () => { edFocused = true; disp.classList.add('focused'); };
+    el.onclick = e => e.stopPropagation();
+}
 
-    function edFocus() {
-        edFocused = true;
-        disp.classList.add('focused');
-    }
+function tokenClass(v) {
+    if (/^x$/.test(v))                                                              return 'mt-x';
+    if (/^(sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|exp|log|sqrt|cbrt|floor|ln|abs)/.test(v)) return 'mt-fn';
+    if (/^[+\-*/]$/.test(v))                                                        return 'mt-op';
+    if (/^[\d.]+$/.test(v))                                                         return 'mt-num';
+    return 'mt-misc';
+}
 
-    function edInsertRaw(val) {
-        edFocus();
-        const prev = nodes[cursor - 1];
-        if (prev && prev.type === 'text') {
-            prev.val += val;
-        } else {
-            nodes.splice(cursor, 0, {type: 'text', val});
-            cursor++;
-        }
-        render();
-    }
+function syncAll() {
+    const py = toPython();
+    syncPreview(py); syncBtn(py);
+    clearTimeout(window._ct);
+    window._ct = setTimeout(() => GraficaGGB.graficarAuto(py), 800);
+}
 
-    function edInsertFrac() {
-        edFocus();
-        nodes.splice(cursor, 0, {type: 'frac', num: '', den: ''});
-        cursor++;
-        render();
-        setTimeout(() => {
-            const t = [...disp.querySelectorAll('.mfrac')][cursor - 1];
-            if (t) t.querySelector('.mfrac-num').focus();
-        }, 40);
-    }
+function syncPreview(py) {
+    if (!py)        { prevEl.textContent = ''; return; }
+    if (!/x/.test(py)) { prevEl.textContent = ''; return; }
+    prevEl.textContent = 'f(x) = ' + py.replace(/\*\*/g,'ˆ').replace(/\*/g,'·');
+}
 
-    function edInsertPow(base, exp) {
-        edFocus();
-        const prev = nodes[cursor - 1];
-        let actualBase = base;
-        if (prev && prev.type === 'text') {
-            const last = prev.val.slice(-1);
-            if (last && last !== '(' && last !== ')') {
-                actualBase = last;
-                prev.val = prev.val.slice(0, -1);
-                if (!prev.val) {
-                    nodes.splice(cursor - 1, 1);
-                    cursor--;
-                }
-            }
-        }
-        nodes.splice(cursor, 0, {type: 'pow', base: actualBase, exp});
-        cursor++;
-        render();
-        setTimeout(() => {
-            const ex = disp.querySelectorAll('.mpow-exp');
-            if (ex[cursor - 1]) ex[cursor - 1].focus();
-        }, 40);
-    }
-
-    function edInsertSqrt() {
-        edFocus();
-        nodes.splice(cursor, 0, {type: 'sqrt', inner: ''});
-        cursor++;
-        render();
-        setTimeout(() => {
-            const b = disp.querySelectorAll('.msqrt-body');
-            if (b[cursor - 1]) b[cursor - 1].focus();
-        }, 40);
-    }
-
-    function edDelete() {
-        if (cursor === 0) return;
-        edDeleteNode(cursor - 1);
-    }
-
-    function edDeleteNode(idx) {
-        const n = nodes[idx];
-        if (n && n.type === 'text' && n.val.length > 1) {
-            n.val = n.val.slice(0, -1);
-        } else {
-            nodes.splice(idx, 1);
-            if (cursor > idx) cursor--;
-        }
-        render();
-    }
-
-    function edClear() {
-        nodes = [];
-        cursor = 0;
-        lastRoots = [];
-        render();
-        drawChart();
-    }
-
-    function loadEq(py) {
-        nodes = tokenize(py);
+// Clic en la pantalla → colocar cursor al final o en posición del clic
+function onDisplayClick(e) {
+    edFocused = true;
+    disp.classList.add('focused');
+    if (e.target === disp) {
         cursor = nodes.length;
-        lastRoots = [];
         render();
     }
+}
 
-    function tokenize(str) {
-        const out = [];
-        const re = /(\([^)]*\)\/\([^)]*\))|([a-zA-Z_]\w*\*\*\([^)]+\))|([a-zA-Z_]?\w*\*\*\d+(?:\.\d+)?(?:\*\*\d+)?)|(sqrt\([^)]*\))|([^])/g;
-        let m;
-        while ((m = re.exec(str)) !== null) {
-            const raw = m[0];
-            const fm = raw.match(/^\(([^)]*)\)\/\(([^)]*)\)$/);
-            if (fm) {
-                out.push({type: 'frac', num: fm[1], den: fm[2]});
-                continue;
-            }
-            const pm1 = raw.match(/^([a-zA-Z_]\w*)\*\*\(([^)]+)\)$/);
-            if (pm1) {
-                out.push({type: 'pow', base: pm1[1], exp: pm1[2]});
-                continue;
-            }
-            const pm2 = raw.match(/^([a-zA-Z_]?\w*)\*\*(\d+(?:\.\d+)?)$/);
-            if (pm2) {
-                out.push({type: 'pow', base: pm2[1], exp: pm2[2]});
-                continue;
-            }
-            const sm = raw.match(/^sqrt\(([^)]*)\)$/);
-            if (sm) {
-                out.push({type: 'sqrt', inner: sm[1]});
-                continue;
-            }
-            const last = out[out.length - 1];
-            if (last && last.type === 'text') last.val += raw; else out.push({type: 'text', val: raw});
+// Clic fuera → perder foco
+document.addEventListener('click', e => {
+    if (!disp.contains(e.target) && !e.target.closest('.mathkb')) {
+        edFocused = false;
+        disp.classList.remove('focused');
+    }
+    // Si el clic fue en un pill, param input u otro elemento de la UI
+    // volver a enfocar la calculadora después de un momento
+    if (!e.target.closest('input') && !e.target.closest('.param-group')) {
+        setTimeout(() => edFocus(), 100);
+    }
+});
+
+// Teclado físico
+document.addEventListener('keydown', e => {
+    if (document.activeElement && document.activeElement.contentEditable === 'true') return;
+    if (!edFocused) return;
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); cursor = Math.max(0, cursor-1); render(); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); cursor = Math.min(nodes.length, cursor+1); render(); return; }
+    if (e.key === 'Backspace')  { e.preventDefault(); edDelete(); return; }
+    if (e.key === 'Escape')     { edFocused = false; disp.classList.remove('focused'); return; }
+    if (e.key === 'Enter')      { e.preventDefault(); if (!document.getElementById('solve-btn').disabled) solve(); return; }
+    const ch = e.key;
+    if (ch.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        ch === '^' ? edInsertPow('x','') : edInsertRaw(ch);
+    }
+});
+
+// Activar editor al hacer clic en cualquier botón del teclado
+document.querySelectorAll('.mathkb .kb-btn').forEach(btn => {
+    btn.addEventListener('mousedown', e => {
+        e.preventDefault();
+        edFocused = true;
+        disp.classList.add('focused');
+    });
+});
+
+function edFocus() {
+    edFocused = true;
+    disp.classList.add('focused');
+}
+
+function edInsertRaw(val) {
+    edFocus();
+    const prev = nodes[cursor-1];
+    // No fusionar si el token anterior termina en una constante (e, pi)
+    // o si el nuevo token comienza con una variable/constante
+    // Esto evita que "e"+"x" → "ex" en lugar de "e" "x" separados
+    const prevVal   = prev && prev.type === 'text' ? prev.val : '';
+    const endsConst = /(?:^|[^a-zA-Z])(e|pi)$/.test(prevVal);
+    const startsVar = /^(x|e|pi)\b/.test(val);
+    const endsNum   = /\d$/.test(prevVal);
+    const startsAlpha = /^[a-zA-Z]/.test(val);
+
+    if (prev && prev.type === 'text' && !endsConst && !(endsNum && startsAlpha)) {
+        prev.val += val;
+    } else {
+        nodes.splice(cursor, 0, {type:'text', val}); cursor++;
+    }
+    render();
+}
+
+function edInsertFrac() {
+    edFocus();
+    nodes.splice(cursor, 0, {type:'frac', num:'', den:''}); cursor++;
+    render();
+    setTimeout(() => { const t = [...disp.querySelectorAll('.mfrac')][cursor-1]; if (t) t.querySelector('.mfrac-num').focus(); }, 40);
+}
+
+function edInsertPow(base, exp) {
+    edFocus();
+    const prev = nodes[cursor-1];
+    let actualBase = base;
+    if (prev && prev.type === 'text') {
+        const last = prev.val.slice(-1);
+        if (last && last !== '(' && last !== ')') {
+            actualBase = last; prev.val = prev.val.slice(0,-1);
+            if (!prev.val) { nodes.splice(cursor-1, 1); cursor--; }
         }
-        return out;
+    }
+    nodes.splice(cursor, 0, {type:'pow', base:actualBase, exp}); cursor++;
+    render();
+    setTimeout(() => { const ex = disp.querySelectorAll('.mpow-exp'); if (ex[cursor-1]) ex[cursor-1].focus(); }, 40);
+}
+
+function edInsertSqrt() {
+    edFocus();
+    nodes.splice(cursor, 0, {type:'sqrt', inner:''}); cursor++;
+    render();
+    setTimeout(() => { const b = disp.querySelectorAll('.msqrt-body'); if (b[cursor-1]) b[cursor-1].focus(); }, 40);
+}
+
+function edInsertCbrt() {
+    edFocus();
+    nodes.splice(cursor, 0, {type:'cbrt', inner:''}); cursor++;
+    render();
+    setTimeout(() => { const b = disp.querySelectorAll('.msqrt-body'); if (b[cursor-1]) b[cursor-1].focus(); }, 40);
+}
+
+function edInsertNthRoot() {
+    edFocus();
+    nodes.splice(cursor, 0, {type:'nroot', degree:'', inner:''}); cursor++;
+    render();
+    // Enfocar el campo de grado
+    setTimeout(() => {
+        const ws = disp.querySelectorAll('.msqrt');
+        const w  = ws[cursor-1];
+        if (w) { const deg = w.querySelector('span[contenteditable]'); if (deg) deg.focus(); }
+    }, 40);
+}
+
+// Inserta función recíproca: csc(x) = 1/sin(x), etc.
+function insertRecip(fn) {
+    edFocus();
+    edInsertRaw(`1/${fn}(`);
+}
+
+function edDelete() {
+    if (cursor === 0) return;
+    edDeleteNode(cursor-1);
+    // Asegurar que el foco vuelve al display
+    edFocus();
+}
+
+function edDeleteNode(idx) {
+    const n = nodes[idx];
+    if (n && n.type === 'text' && n.val.length > 1) { n.val = n.val.slice(0,-1); }
+    else { nodes.splice(idx, 1); if (cursor > idx) cursor--; }
+    // Re-enfocar siempre
+    edFocus();
+    render();
+}
+
+function edClear() {
+    nodes = []; cursor = 0; lastRoots = [];
+    // Ocultar warning al limpiar
+    document.getElementById('method-warning').style.display = 'none';
+    render();
+    GraficaGGB.limpiar();
+    edFocus();
+}
+
+function loadEq(py) {
+    nodes = tokenize(py); cursor = nodes.length; lastRoots = [];
+    document.getElementById('method-warning').style.display = 'none';
+    render();
+    edFocus();
+}
+
+function tokenize(str) {
+    const out = [];
+    const re = /(\([^)]*\)\/\([^)]*\))|([a-zA-Z_]\w*\*\*\([^)]+\))|([a-zA-Z_]?\w*\*\*\d+(?:\.\d+)?)|(sqrt\([^)]*\))|(cbrt\([^)]*\))|([^])/g;
+    let m;
+    while ((m = re.exec(str)) !== null) {
+        const raw = m[0];
+        const fm  = raw.match(/^\(([^)]*)\)\/\(([^)]*)\)$/);
+        if (fm)  { out.push({type:'frac', num:fm[1], den:fm[2]}); continue; }
+        const pm1 = raw.match(/^([a-zA-Z_]\w*)\*\*\(([^)]+)\)$/);
+        if (pm1) { out.push({type:'pow', base:pm1[1], exp:pm1[2]}); continue; }
+        const pm2 = raw.match(/^([a-zA-Z_]?\w*)\*\*(\d+(?:\.\d+)?)$/);
+        if (pm2) { out.push({type:'pow', base:pm2[1], exp:pm2[2]}); continue; }
+        const sm  = raw.match(/^sqrt\(([^)]*)\)$/);
+        if (sm)  { out.push({type:'sqrt', inner:sm[1]}); continue; }
+        const cm  = raw.match(/^cbrt\(([^)]*)\)$/);
+        if (cm)  { out.push({type:'cbrt', inner:cm[1]}); continue; }
+        const last = out[out.length-1];
+        if (last && last.type === 'text') last.val += raw;
+        else out.push({type:'text', val:raw});
+    }
+    return out;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GRÁFICA GEOGEBRA
+// ══════════════════════════════════════════════════════════════
+const GraficaGGB = (() => {
+    let applet = null, ggbListo = false;
+    let estadoActual = { expresion:'', raices:[], xMin:-5, xMax:5 };
+
+    function pythonAGGB(expr) {
+        if (!expr) return '';
+        let e = expr;
+        e = e.replace(/\*\*/g, '^');
+        e = e.replace(/\blog\b\s*\(/g, 'ln(');
+        e = e.replace(/\blog10\b\s*\(/g, 'log(10,');
+        e = e.replace(/\bcbrt\b\s*\(/g, 'cbrt(');
+        e = e.replace(/\bE\b/g, 'e');
+        e = e.replace(/(\d)([a-zA-Z(])/g, '$1 $2');
+        return e;
     }
 
-    const API = 'http://localhost:8000';
-    let chartInstance = null, lastRoots = [];
-    const METHODS = {
-        biseccion: {params: ['a', 'b', 'tol', 'maxIter']},
-        falsa_posicion: {params: ['a', 'b', 'tol', 'maxIter']},
-        punto_fijo: {params: ['x0', 'tol', 'maxIter']},
-        newton: {params: ['x0', 'tol', 'maxIter']},
-        newton_mod: {params: ['x0', 'tol', 'maxIter']},
-        secante: {params: ['x0', 'x1', 'tol', 'maxIter']},
-        lineal: {params: []},
-        cuadratica: {params: []},
-        cuad_mod: {params: []},
-        tartaglia: {params: []},
-        ferrari: {params: []},
-        horner: {params: []},
-        muller: {params: ['x0', 'x1', 'x2', 'tol', 'maxIter']},
-        bairstow: {params: ['r', 's', 'tol']},
-        bairstow2: {params: ['r', 's', 'tol']}
-    };
-    const PARAM_LABELS = {
-        a: 'a (lím. izq)',
-        b: 'b (lím. der)',
-        x0: 'x₀',
-        x1: 'x₁',
-        x2: 'x₂',
-        tol: 'Tolerancia',
-        maxIter: 'Máx. iter',
-        r: 'r',
-        s: 's'
-    };
-    const PARAM_DEFAULTS = {a: '-2', b: '2', x0: '0', x1: '1', x2: '2', tol: '0.0001', maxIter: '100', r: '1', s: '-1'};
-    const QUICK = {
-        biseccion: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {
-            label: 'x² − 4',
-            val: 'x**2 - 4'
-        }, {label: 'sin(x) − x/2', val: 'sin(x) - x/2'}],
-        falsa_posicion: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'eˣ − 3', val: 'exp(x) - 3'}],
-        newton: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'cos(x) − x', val: 'cos(x) - x'}, {
-            label: 'x² − 2',
-            val: 'x**2 - 2'
-        }],
-        newton_mod: [{label: '(x−1)²', val: '(x-1)**2'}, {label: 'x³ − x − 2', val: 'x**3 - x - 2'}],
-        secante: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'x² − 3', val: 'x**2 - 3'}],
-        punto_fijo: [{label: 'cos(x) − x', val: 'cos(x) - x'}, {label: 'x³ − x − 2', val: 'x**3 - x - 2'}],
-        lineal: [{label: '2x + 5', val: '2*x + 5'}, {label: '3x − 9', val: '3*x - 9'}],
-        cuadratica: [{label: 'x² − 5x + 6', val: 'x**2 - 5*x + 6'}, {label: 'x² + x + 1', val: 'x**2 + x + 1'}],
-        cuad_mod: [{label: 'x² − 0.0001', val: 'x**2 - 0.0001'}, {label: 'x² + 0.0001', val: 'x**2 + 0.0001'}],
-        tartaglia: [{label: 'x³ − 6x − 9', val: 'x**3 - 6*x - 9'}, {label: 'x³ − 3x + 2', val: 'x**3 - 3*x + 2'}],
-        ferrari: [{label: 'x⁴ − 5x² + 4', val: 'x**4 - 5*x**2 + 4'}, {label: 'x⁴ − 1', val: 'x**4 - 1'}],
-        horner: [{label: 'x⁵ − x − 1', val: 'x**5 - x - 1'}, {label: 'x⁵ − 32', val: 'x**5 - 32'}],
-        muller: [{label: 'x³ − x − 2', val: 'x**3 - x - 2'}, {label: 'x⁴ − 1', val: 'x**4 - 1'}],
-        bairstow: [{label: 'x⁴ − 1', val: 'x**4 - 1'}, {label: 'x³−6x²+11x−6', val: 'x**3 - 6*x**2 + 11*x - 6'}],
-        bairstow2: [{label: 'x⁴ − 1', val: 'x**4 - 1'}, {label: 'x³+x²−4x−4', val: 'x**3 + x**2 - 4*x - 4'}]
-    };
-    let currentMethod = null;
+    function inicializar(cb) {
+        const w = document.getElementById('ggb-container').offsetWidth || 700;
+        const params = {
+            appName: 'graphing', width: w, height: 480,
+            showMenuBar: false, showAlgebraInput: false, showToolBar: false,
+            showResetIcon: false, enableLabelDrags: false,
+            enableShiftDragZoom: true, enableRightClick: false,
+            appletOnLoad() { ggbListo = true; if (cb) cb(); setTimeout(() => edFocus(), 3000); }
+        };
+        applet = new GGBApplet(params, true);
+        applet.inject('ggb-container');
+    }
 
-    async function checkServer() {
+    function dibujar({ expresion, raices = [], xMin = -5, xMax = 5 }) {
+        if (!ggbListo || !applet) return;
+        estadoActual = { expresion, raices, xMin, xMax };
+        const api = applet.getAppletObject();
+        if (!api) return;
+        api.newConstruction();
+        const exprGGB = pythonAGGB(expresion);
+        api.setCoordSystem(xMin, xMax, -10, 10);
+        if (!exprGGB) return;
         try {
-            const r = await fetch(API + '/');
-            if (r.ok) {
-                document.getElementById('status-dot').classList.add('online');
-                document.getElementById('status-text').textContent = 'servidor activo';
-            } else throw 0;
-        } catch {
-            document.getElementById('status-dot').classList.remove('online');
-            document.getElementById('status-text').textContent = 'servidor offline';
-        }
+            api.evalCommand(`f(x) = ${exprGGB}`);
+           api.setColor('f', 128, 0, 128)
+            api.setLineThickness('f', 6);
+            api.setLabelVisible('f', false);
+
+            // Eje X (y=0) — se mantiene para referencia visual
+            api.evalCommand('ejex: y = 0');
+            api.setColor('ejex', 180, 180, 180);
+            api.setLineThickness('ejex', 1);
+            api.setLabelVisible('ejex', false);
+
+            // Raíces: solo punto, SIN línea vertical auxiliar
+            const raicesReales = raices.filter(r => typeof r === 'number' && isFinite(r));
+            raicesReales.forEach((r, i) => {
+                const rx = parseFloat(r.toFixed(8)), nom = `R${i}`;
+                api.evalCommand(`${nom} = (${rx}, 0)`);
+                api.setColor(nom, 56, 189, 180);
+                api.setPointSize(nom, 7);
+                api.setLabelVisible(nom, true);
+                api.setLabelStyle(nom, 1);
+                // Sin línea vertical — se eliminó vl${i}
+            });
+
+            const ley = document.getElementById('ggb-leyenda');
+            if (raicesReales.length > 0) {
+                ley.style.display = 'flex';
+                ley.innerHTML = raicesReales.map((r, i) =>
+                    `<span style="color:var(--accent2)">x${i+1} = ${parseFloat(r).toFixed(6)}</span>`
+                ).join('&nbsp;&nbsp;');
+                if (raices.some(r => typeof r === 'object'))
+                    ley.innerHTML += '&nbsp;&nbsp;<span style="color:var(--muted)">(complejas no graficadas)</span>';
+            } else {
+                ley.style.display = 'none';
+            }
+        } catch (err) { console.warn('GeoGebra:', err); }
     }
 
-    checkServer();
-    setInterval(checkServer, 5000);
-
-    function selectMethod(el) {
-        document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
-        el.classList.add('active');
-        currentMethod = el.dataset.method;
-        renderParams();
-        renderQuick();
-        syncWarnings(toPython());
-        syncBtn(toPython());
+    function redibujar() {
+        const xMin = parseFloat(document.getElementById('xmin').value) || -5;
+        const xMax = parseFloat(document.getElementById('xmax').value) ||  5;
+        if (xMin >= xMax) { alert('x min debe ser menor que x max.'); return; }
+        dibujar({ ...estadoActual, xMin, xMax });
     }
 
-    function renderParams() {
-        const m = METHODS[currentMethod];
-        const sec = document.getElementById('params-section');
-        if (!m.params.length) {
-            sec.innerHTML = '';
-            return;
-        }
-        sec.innerHTML = `<div class="params-grid">${m.params.map(p => `<div class="param-group"><label>${PARAM_LABELS[p] || p}</label><input id="param-${p}" value="${PARAM_DEFAULTS[p] || ''}"></div>`).join('')}</div>`;
+    function graficarAuto(expresion) {
+        if (!expresion || !/x/.test(expresion)) return;
+        const xMin = parseFloat(document.getElementById('xmin').value) || -5;
+        const xMax = parseFloat(document.getElementById('xmax').value) ||  5;
+        if (!ggbListo) { inicializar(() => dibujar({ expresion, raices: lastRoots, xMin, xMax })); }
+        else           { dibujar({ expresion, raices: lastRoots, xMin, xMax }); }
     }
 
-    function renderQuick() {
-        const eqs = QUICK[currentMethod] || [];
-        document.getElementById('quick-eqs').innerHTML = eqs.map(eq => `<button class="quick-tag" onclick="loadEq('${eq.val}')">${eq.label}</button>`).join('');
+    function graficar({ expresion, raices, xMin, xMax }) {
+        if (!ggbListo) { inicializar(() => dibujar({ expresion, raices, xMin, xMax })); }
+        else           { dibujar({ expresion, raices, xMin, xMax }); }
     }
 
-    function syncWarnings(py) {
-        const warn = document.getElementById('method-warning');
-        if (!currentMethod || !py) {
-            warn.style.display = 'none';
-            return;
-        }
-        let msg = '';
-        if (currentMethod === 'lineal' && /x\*\*[2-9]/.test(py)) msg = 'Este método es solo para ecuaciones lineales (grado 1).';
-        if (currentMethod === 'cuadratica' && /x\*\*[3-9]/.test(py)) msg = 'La fórmula cuadrática es para grado 2. Considera Tartaglia o Ferrari.';
-        if (currentMethod === 'tartaglia' && /x\*\*[4-9]/.test(py)) msg = 'Tartaglia resuelve cúbicas. Para grado 4 usa Ferrari.';
-        warn.style.display = msg ? 'block' : 'none';
-        warn.textContent = msg ? '⚠ ' + msg : '';
+    function limpiar() {
+        if (ggbListo && applet) { const api = applet.getAppletObject(); if (api) api.newConstruction(); }
+        document.getElementById('ggb-leyenda').style.display = 'none';
     }
 
-    function syncBtn(py) {
-        const btn = document.getElementById('solve-btn');
-        if (!currentMethod) {
-            btn.disabled = true;
-            btn.textContent = 'Selecciona un método';
-            return;
-        }
-        if (!py || !/x/.test(py)) {
-            btn.disabled = true;
-            btn.textContent = 'Ingresa la ecuación';
-            return;
-        }
+    window.addEventListener('load', () => inicializar(null));
+    return { graficar, graficarAuto, redibujar, limpiar };
+})();
+
+// ══════════════════════════════════════════════════════════════
+//  LÓGICA DE APP
+// ══════════════════════════════════════════════════════════════
+const API = 'http://localhost:8000';
+let lastRoots = [];
+
+const METHODS = {
+    biseccion:      { params: ['a','b','tol','maxIter'] },
+    falsa_posicion: { params: ['a','b','tol','maxIter'] },
+    punto_fijo:     { params: ['x0','tol','maxIter'] },
+    newton:         { params: ['x0','tol','maxIter'] },
+    newton_mod:     { params: ['x0','tol','maxIter'] },
+    secante:        { params: ['x0','x1','tol','maxIter'] },
+    lineal:         { params: [] },
+    cuadratica:     { params: [] },
+    cuad_mod:       { params: [] },
+    tartaglia:      { params: [] },
+    ferrari:        { params: [] },
+    horner:         { params: [] },
+    muller:         { params: ['x0','x1','x2','tol','maxIter'] },
+    bairstow:       { params: ['r','s','tol'] },
+    bairstow2:      { params: ['r','s','tol'] }
+};
+const PARAM_LABELS = {
+    a:'a (lím. izq)', b:'b (lím. der)',
+    x0:'x₀', x1:'x₁', x2:'x₂',
+    tol:'Tolerancia', maxIter:'Máx. iter',
+    r:'r', s:'s'
+};
+const PARAM_DEFAULTS = { a:'-2', b:'2', x0:'0', x1:'1', x2:'2', tol:'0.0001', maxIter:'100', r:'1', s:'-1' };
+const QUICK = {
+    biseccion:      [{label:'x³−x−2', val:'x**3-x-2'},{label:'x²−4', val:'x**2-4'},{label:'sin(x)−x/2', val:'sin(x)-x/2'}],
+    falsa_posicion: [{label:'x³−x−2', val:'x**3-x-2'},{label:'eˣ−3', val:'exp(x)-3'}],
+    newton:         [{label:'x³−x−2', val:'x**3-x-2'},{label:'cos(x)−x', val:'cos(x)-x'},{label:'x²−2', val:'x**2-2'}],
+    newton_mod:     [{label:'(x−1)²', val:'(x-1)**2'},{label:'x³−x−2', val:'x**3-x-2'}],
+    secante:        [{label:'x³−x−2', val:'x**3-x-2'},{label:'x²−3', val:'x**2-3'}],
+    punto_fijo:     [{label:'x−sin(x)−0.5', val:'x-sin(x)-0.5'},{label:'x³−x−2', val:'x**3-x-2'}],
+    lineal:         [{label:'2x+5', val:'2*x+5'},{label:'3x−9', val:'3*x-9'}],
+    cuadratica:     [{label:'x²−5x+6', val:'x**2-5*x+6'},{label:'x²+x+1', val:'x**2+x+1'}],
+    cuad_mod:       [{label:'x²−0.0001', val:'x**2-0.0001'},{label:'x²+0.0001', val:'x**2+0.0001'}],
+    tartaglia:      [{label:'x³−6x−9', val:'x**3-6*x-9'},{label:'x³−3x+2', val:'x**3-3*x+2'}],
+    ferrari:        [{label:'x⁴−5x²+4', val:'x**4-5*x**2+4'},{label:'x⁴−1', val:'x**4-1'}],
+    horner:         [{label:'x⁵−x−1', val:'x**5-x-1'},{label:'x⁵−32', val:'x**5-32'}],
+    muller:         [{label:'x³−x−2', val:'x**3-x-2'},{label:'x⁴−1', val:'x**4-1'}],
+    bairstow:       [{label:'x⁴−1', val:'x**4-1'},{label:'x³−6x²+11x−6', val:'x**3-6*x**2+11*x-6'}],
+    bairstow2:      [{label:'x⁴−1', val:'x**4-1'},{label:'x³+x²−4x−4', val:'x**3+x**2-4*x-4'}]
+};
+let currentMethod = null;
+
+async function checkServer() {
+    try {
+        const r = await fetch(API + '/');
+        if (r.ok) {
+            document.getElementById('status-dot').classList.add('online');
+            document.getElementById('status-text').textContent = 'servidor activo';
+        } else throw 0;
+    } catch {
+        document.getElementById('status-dot').classList.remove('online');
+        document.getElementById('status-text').textContent = 'servidor offline';
+    }
+}
+checkServer();
+setInterval(checkServer, 5000);
+
+function selectMethod(el) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    currentMethod = el.dataset.method;
+    renderParams();
+    renderQuick();
+    // Ocultar warning al cambiar método
+    document.getElementById('method-warning').style.display = 'none';
+    syncBtn(toPython());
+    // Limpiar resultado anterior
+    const sec = document.getElementById('result-section');
+    sec.innerHTML = `<div class="empty-state" style="padding:1.2rem 1rem;font-size:12px">
+        Ingresa la ecuación y presiona <strong>Calcular</strong></div>`;
+    edFocus();
+}
+
+function renderParams() {
+    const m = METHODS[currentMethod];
+    const panel = document.getElementById('params-panel');
+    const sec   = document.getElementById('params-section');
+    if (!m.params.length) {
+        panel.style.display = 'none';
+        sec.innerHTML = '';
+        return;
+    }
+    panel.style.display = 'block';
+    sec.innerHTML = `<div class="params-grid">${m.params.map(p =>
+        `<div class="param-group"><label>${PARAM_LABELS[p]||p}</label><input id="param-${p}" value="${PARAM_DEFAULTS[p]||''}"></div>`
+    ).join('')}</div>`;
+}
+
+function renderQuick() {
+    const eqs = QUICK[currentMethod] || [];
+    document.getElementById('quick-eqs').innerHTML = eqs.map(eq =>
+        `<button class="quick-tag" onclick="loadEq('${eq.val}')">${eq.label}</button>`
+    ).join('');
+}
+
+// Warning solo se muestra al hacer clic en Calcular
+function checkWarningsOnSolve(py) {
+    const warn = document.getElementById('method-warning');
+    if (!currentMethod || !py) { warn.style.display = 'none'; return true; }
+    let msg = '';
+    if (currentMethod === 'lineal'     && /x\*\*[2-9]/.test(py)) msg = 'Solo para ecuaciones de grado 1.';
+    if (currentMethod === 'cuadratica' && /x\*\*[3-9]/.test(py)) msg = 'La fórmula cuadrática es para grado 2. Usa Tartaglia o Ferrari.';
+    if (currentMethod === 'tartaglia'  && /x\*\*[4-9]/.test(py)) msg = 'Tartaglia resuelve cúbicas (grado 3). Para grado 4 usa Ferrari.';
+    if (msg) {
+        warn.style.display = 'block';
+        warn.textContent   = '⚠ ' + msg;
+        return false; // bloquear cálculo
+    }
+    warn.style.display = 'none';
+    return true;
+}
+
+function syncBtn(py) {
+    const btn = document.getElementById('solve-btn');
+    if (!currentMethod)       { btn.disabled = true; btn.textContent = 'Selecciona un método →'; return; }
+    if (!py || !/x/.test(py)) { btn.disabled = true; btn.textContent = 'Ingresa la ecuación →';  return; }
+    btn.disabled = false;
+    btn.textContent = 'Calcular →';
+}
+
+async function solve() {
+    const eq  = toPython().trim();
+    const btn = document.getElementById('solve-btn');
+    const xMin = parseFloat(document.getElementById('xmin').value) || -5;
+    const xMax = parseFloat(document.getElementById('xmax').value) ||  5;
+
+    // Verificar advertencias SOLO al calcular
+    if (!checkWarningsOnSolve(eq)) return;
+
+    const m = METHODS[currentMethod];
+    const params = {};
+    (m.params || []).forEach(p => {
+        params[p] = document.getElementById('param-' + p)?.value || PARAM_DEFAULTS[p];
+    });
+
+    btn.disabled = true;
+    btn.textContent = 'Calculando...';
+
+    document.getElementById('result-section').innerHTML =
+        `<div class="empty-state" style="padding:1.2rem 1rem;font-size:12px;color:var(--muted)">
+            Calculando...</div>`;
+
+    try {
+        const res  = await fetch(API + '/solve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ equation: eq, method: currentMethod, params })
+        });
+        const data = await res.json();
+        renderResult(data);
+        lastRoots = (data.roots || [])
+            .filter(r => typeof r === 'number' && isFinite(r))
+            .map(r => parseFloat(r.toFixed(8)));
+        GraficaGGB.graficar({ expresion: eq, raices: lastRoots, xMin, xMax });
+    } catch {
+        renderResult({ error: true, message: 'No se pudo conectar al servidor. Asegúrate de que uvicorn esté corriendo en localhost:8000.' });
+    } finally {
         btn.disabled = false;
         btn.textContent = 'Calcular →';
+        edFocus();
     }
+}
 
-    async function solve(){
-        const eq=toPython().trim();
-        const btn=document.getElementById('solve-btn');
-
-        // ── Punto fijo resuelto en el navegador (sin backend) ──
-        if(currentMethod==='punto_fijo'){
-            const x0  = parseFloat(document.getElementById('param-x0')?.value  ?? PARAM_DEFAULTS.x0);
-            const tol = parseFloat(document.getElementById('param-tol')?.value  ?? PARAM_DEFAULTS.tol);
-            const max = parseInt  (document.getElementById('param-maxIter')?.value ?? PARAM_DEFAULTS.maxIter);
-            const iters=[];
-            let x=x0, err=Infinity;
-            for(let n=1; n<=max && err>=tol; n++){
-                const fx=evalEq(eq,x);
-                if(fx===null){renderResult({error:true,message:'f(x) no evaluable en x = '+x});return;}
-                const xNew=x - fx;          // g(x) = x − f(x)
-                err=Math.abs(xNew - x);
-                iters.push({n, x:xNew, fx:evalEq(eq,xNew)??0, error:err});
-                x=xNew;
-            }
-            renderResult({roots:[x], iterations:iters, warning:err>=tol?'No convergió en '+max+' iteraciones':null});
-            lastRoots=[parseFloat(x.toFixed(8))];
-            drawChart();
-            return;
-        }
-        // ──────────────────────────────────────────────────────
-
-        const m=METHODS[currentMethod];
-        const params={};
-        (m.params||[]).forEach(p=>{params[p]=document.getElementById('param-'+p)?.value||PARAM_DEFAULTS[p];});
-        btn.disabled=true;btn.textContent='Calculando...';
-        try{
-            const res=await fetch(API+'/solve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({equation:eq,method:currentMethod,params})});
-            const data=await res.json();
-            renderResult(data);
-            lastRoots=(data.roots||[]).filter(r=>typeof r==='number'&&isFinite(r)).map(r=>parseFloat(r.toFixed(8)));
-            drawChart();
-        }catch{
-            renderResult({error:true,message:'No se pudo conectar al servidor. Asegúrate de que uvicorn esté corriendo en localhost:8000.'});
-        }finally{
-            btn.disabled=false;btn.textContent='Calcular →';
-        }
+// Formatea números de la tabla de iteraciones de forma legible:
+// — Cero exacto → "0"
+// — Muy pequeño (< 0.001) → notación científica limpia: "4.3 × 10⁻⁹"
+// — Resto → decimal fijo con hasta 8 cifras, sin ceros innecesarios
+function fmtNum(v, decimals = 8) {
+    if (typeof v !== 'number') return v;
+    if (!isFinite(v)) return v.toString();
+    if (v === 0) return '0';
+    const abs = Math.abs(v);
+    if (abs < 1e-4 && abs > 0) {
+        // Notación científica"
+        const exp = Math.floor(Math.log10(abs));
+        const coef = (v / Math.pow(10, exp)).toFixed(3).replace(/\.?0+$/, '');
+        const supMap = {'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+        const expStr = String(exp).split('').map(c => supMap[c] || c).join('');
+        return `${coef} × 10${expStr}`;
     }
+    // Decimal normal, sin ceros finales innecesarios
+    return parseFloat(v.toFixed(decimals)).toString();
+}
 
-    function renderResult(data) {
-        const sec = document.getElementById('result-section');
-        if (data.error) {
-            sec.innerHTML = `<div class="result-header"><span style="font-size:13px;font-weight:600">Resultado</span><span class="badge err">Error</span></div><div class="error-box">${data.message}</div>`;
-            return;
-        }
-        const badge = data.warning ? '<span class="badge warn">Advertencia</span>' : '<span class="badge ok">OK</span>';
-        const rootsHtml = (data.roots || []).map((r, i) => {
-            if (typeof r === 'object' && r.im !== undefined) return `<div class="root-card"><div class="root-label">x${i + 1}</div><div class="root-complex">${r.re.toFixed(6)} ${r.im >= 0 ? '+' : ''}${r.im.toFixed(6)}i</div></div>`;
-            return `<div class="root-card"><div class="root-label">x${i + 1}</div><div class="root-val">${typeof r === 'number' ? r.toFixed(8) : r}</div></div>`;
-        }).join('');
-        const iters = data.iterations || [];
-        const iterHtml = iters.length ? `<div style="margin-top:1rem"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Iteraciones (${iters.length})</div><div class="iter-scroll"><table class="iter-table"><thead><tr><th>N</th><th>x</th><th>f(x)</th><th>Error</th></tr></thead><tbody>${iters.slice(0, 20).map(it => `<tr><td>${it.n}</td><td>${typeof it.x === 'number' ? it.x.toFixed(8) : it.x}</td><td>${typeof it.fx === 'number' ? it.fx.toExponential(3) : it.fx}</td><td>${typeof it.error === 'number' ? it.error.toExponential(3) : it.error}</td></tr>`).join('')}</tbody></table></div></div>` : '';
-        sec.innerHTML = `<div class="result-header"><span style="font-size:13px;font-weight:600">Resultado</span>${badge}</div>${data.warning ? `<div class="warn-msg">⚠ ${data.warning}</div>` : ''}<div class="roots-row">${rootsHtml || '<span style="color:var(--muted);font-size:13px">Sin raíces reales encontradas</span>'}</div>${iterHtml}`;
+function renderResult(data) {
+    const sec = document.getElementById('result-section');
+    if (data.error) {
+        sec.innerHTML = `
+            <div class="result-header">
+                <span style="font-size:13px;font-weight:600">Resultado</span>
+                <span class="badge err">Error</span>
+            </div>
+            <div class="error-box">${data.message}</div>`;
+        return;
     }
+    const badge = data.warning
+        ? '<span class="badge warn">Advertencia</span>'
+        : '<span class="badge ok">OK</span>';
 
-    function evalEq(py, xv) {
-        try {
-            const safe = py.replace(/\bsin\b/g, 'Math.sin').replace(/\bcos\b/g, 'Math.cos').replace(/\btan\b/g, 'Math.tan').replace(/\bexp\b/g, 'Math.exp').replace(/\bsqrt\b/g, 'Math.sqrt').replace(/\blog\b/g, 'Math.log').replace(/\babs\b/g, 'Math.abs').replace(/\bln\b/g, 'Math.log').replace(/\bpi\b/g, 'Math.PI').replace(/(\d)(x)/g, '$1*$2');
-            const y = new Function('x', `"use strict";return ${safe};`)(xv);
-            return isFinite(y) ? y : null;
-        } catch {
-            return null;
-        }
+    const rootsHtml = (data.roots || []).map((r, i) => {
+        if (typeof r === 'object' && r.im !== undefined)
+            return `<div class="root-card">
+                        <div class="root-label">x${i+1}</div>
+                        <div class="root-complex">${r.re.toFixed(6)} ${r.im >= 0 ? '+' : ''}${r.im.toFixed(6)}i</div>
+                    </div>`;
+        return `<div class="root-card">
+                    <div class="root-label">x${i+1}</div>
+                    <div class="root-val">${typeof r === 'number' ? r.toFixed(8) : r}</div>
+                </div>`;
+    }).join('');
+
+    const iters = data.iterations || [];
+    const iterHtml = iters.length ? `
+        <div style="margin-top:1rem">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">
+                Iteraciones (${iters.length})
+            </div>
+            <div class="iter-scroll">
+                <table class="iter-table">
+                    <thead><tr><th>N</th><th>x</th><th>f(x)</th><th>Error</th></tr></thead>
+                    <tbody>${iters.slice(0, 50).map(it => `
+                        <tr>
+                            <td>${it.n}</td>
+                            <td>${fmtNum(it.x, 8)}</td>
+                            <td>${fmtNum(it.fx, 6)}</td>
+                            <td>${fmtNum(it.error, 6)}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>` : '';
+
+    sec.innerHTML = `
+        <div class="result-header">
+            <span style="font-size:13px;font-weight:600">Resultado</span>
+            ${badge}
+        </div>
+        ${data.warning ? `<div class="warn-msg">⚠ ${data.warning}</div>` : ''}
+        <div class="roots-row">
+            ${rootsHtml || '<span style="color:var(--muted);font-size:13px">Sin raíces reales encontradas</span>'}
+        </div>
+        ${iterHtml}`;
+       edFocus();
+
+}
+
+render();
+// Mantener foco en la calculadora
+setInterval(() => {
+    if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
+        edFocus();
     }
-
-    function drawChart() {
-        const eq = toPython().trim();
-        const xmin = parseFloat(document.getElementById('xmin').value);
-        const xmax = parseFloat(document.getElementById('xmax').value);
-        const canvas = document.getElementById('chart-canvas');
-        const empty = document.getElementById('chart-empty');
-        if (!eq || !/x/.test(eq) || isNaN(xmin) || isNaN(xmax) || xmin >= xmax) {
-            canvas.style.display = 'none';
-            empty.style.display = 'block';
-            return;
-        }
-        canvas.style.display = 'block';
-        empty.style.display = 'none';
-        const N = 400, step = (xmax - xmin) / N;
-        const curve = [];
-        for (let i = 0; i <= N; i++) {
-            const xv = xmin + i * step;
-            curve.push({x: parseFloat(xv.toFixed(5)), y: evalEq(eq, xv)});
-        }
-        const roots = lastRoots.filter(r => r >= xmin && r <= xmax).map(r => ({x: r, y: 0}));
-        if (chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(canvas, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: `f(x) = ${eq}`,
-                    data: curve,
-                    showLine: true,
-                    borderColor: '#7c6cf0',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    tension: 0,
-                    spanGaps: false,
-                    backgroundColor: 'transparent',
-                    order: 2
-                }, {
-                    label: 'Raíces',
-                    data: roots,
-                    showLine: false,
-                    backgroundColor: '#38bdb4',
-                    borderColor: '#fff',
-                    borderWidth: 2,
-                    pointRadius: 7,
-                    pointHoverRadius: 9,
-                    order: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: {duration: 250},
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#8882b0',
-                            font: {family: 'JetBrains Mono', size: 11},
-                            boxWidth: 12
-                        }
-                    },
-                    tooltip: {callbacks: {label: ctx => ctx.datasetIndex === 1 ? `raíz: x = ${ctx.parsed.x?.toFixed(5)}` : `f(${ctx.parsed.x?.toFixed(4)}) = ${ctx.parsed.y?.toFixed(6)}`}}
-                },
-                scales: {
-                    x: {
-                        type: 'linear',
-                        min: xmin,
-                        max: xmax,
-                        ticks: {color: '#8882b0', font: {family: 'JetBrains Mono', size: 10}, maxTicksLimit: 10},
-                        grid: {color: 'rgba(199,191,245,0.4)'}
-                    },
-                    y: {
-                        ticks: {color: '#8882b0', font: {family: 'JetBrains Mono', size: 10}, maxTicksLimit: 8},
-                        grid: {color: 'rgba(199,191,245,0.4)'}
-                    }
-                }
-            }
-        });
-    }
-
-    render();
+}, 500);
+window.addEventListener('load', () => {
+    setTimeout(() => { edFocus(); render(); }, 500);
+});
 </script>
-
 </body>
 </html>

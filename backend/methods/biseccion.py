@@ -5,14 +5,24 @@ class Biseccion(MetodoBase):
 
     def _calcular(self, ec: dict, params: dict) -> Resultado:
         f     = ec['f']
-        a     = self._get_param(params, 'a',       -2.0)
-        b     = self._get_param(params, 'b',        2.0)
-        tol   = self._get_param(params, 'tol',      0.0001)
-        max_i = self._get_param(params, 'maxIter',  100, int)
+        a     = self._get_x0(params, 'a', -2.0)
+        b     = self._get_x0(params, 'b',  2.0)
+        tol   = self._get_param_validado(params, 'tol',     0.0001)
+        max_i = self._get_param_validado(params, 'maxIter', 100, int)
+
+        if a > b:
+            a, b = b, a
+
+        if a == b:
+            raise ValueError(
+                f"Los límites a y b son iguales ({a}). "
+                f"El intervalo debe tener amplitud mayor que cero."
+            )
 
         self._verificar_intervalo(f, a, b)
 
         iters = []
+        mid = a
         for i in range(max_i):
             mid = (a + b) / 2
             err = (b - a) / 2
@@ -26,8 +36,12 @@ class Biseccion(MetodoBase):
             else:
                 a = mid
 
+        hint = self._hint_raiz(f)
         return Resultado(
             roots=[mid],
             iterations=iters,
-            warning="Se alcanzó el máximo de iteraciones."
+            warning=(
+                f"Se alcanzó el máximo de iteraciones ({max_i}). "
+                f"El resultado puede no ser suficientemente preciso.{hint}"
+            )
         )

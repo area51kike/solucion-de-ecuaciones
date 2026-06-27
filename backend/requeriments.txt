@@ -5,3 +5,4 @@ uvicorn main:app --reload
 
 conda activate ecuaciones-solver
 uvicorn main:app --reload
+//ya esta

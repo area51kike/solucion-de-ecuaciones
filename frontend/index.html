@@ -978,7 +978,7 @@
     // ══════════════════════════════════════════════════════════════
     //  LÓGICA DE APP
     // ══════════════════════════════════════════════════════════════
-    const API = 'http://localhost:8000';
+    const API = window.location.origin;
     let lastRoots = [];
 
     const METHODS = {
@@ -1137,7 +1137,7 @@
                 .map(r => parseFloat(r.toFixed(8)));
             GraficaGGB.graficar({ expresion: eq, raices: lastRoots, xMin, xMax });
         } catch {
-            renderResult({ error: true, message: 'No se pudo conectar al servidor. Asegúrate de que uvicorn esté corriendo en localhost:8000.' });
+            renderResult({ error: true, message: 'No se pudo conectar al servidor. El servidor no está disponible.' });
         } finally {
             btn.disabled = false;
             btn.textContent = 'Calcular →';
